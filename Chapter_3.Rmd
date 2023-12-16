@@ -1,0 +1,459 @@
+---
+title: "R Notebook"
+output: 
+  word_document: 
+    highlight: tango
+---
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+load("C:/Users/00028958/LocalData/Dropbox (Ratey at UWA)/R Projects/Urban soils text/.RData")
+```
+
+## 3.3	Analysis of spatial data
+## 3.3.1	Maps
+
+Spatial information is complex, and the most straightforward way of assessing spatial data from urban soil environments is using maps. The map itself presents the land surface as a two-dimensional representation, and other layers of information (such as land elevations, soil properties, contaminant concentrations, etc.) can be represented in different ways such as contour lines, sets of related symbols (*e.g*. size proportional to concentration) and so on. We have already seen Figure 3.3 and Figure 3.4 which show examples of contour-based information, and Figure 3.6 which has two different examples of symbol sets to show information layers on maps.
+
+Maps are usually created in Geographic Information System (GIS) software, although more general open-source platforms such as R (R Core Team, 2019) in combination with specific packages (such as those by Fellows, 2019, Ribeiro and Diggle, 2018) can provide excellent results. In addition, the QGIS package (QGIS.org, 2020) is an open source alternative to commercial GIS software, and has a wide user base.
+
+### 3.3.2	Spatial autocorrelation
+
+One of the objectives of spatial analysis is to investigate the effect of between-sample distance on soil variables. In effect, this is a test of Tobler’s First Law of Geography (Tobler, 2004), stating: 
+
+“*Everything is related to everything else, but near things are more related than distant things*.”
+
+Whether samples are spatially related or not, in terms of a particular soil property, is expressed by the *spatial autocorrelation* or Moran’s I (Zhang *et al*., 2008). The Moran’s I statistic is based on comparison of the values of a variable at one point with a specified number (or within a specified distance) of neighbouring points. A positive Moran’s I autocorrelation suggests that locations with similar values of the variable considered tend to cluster together. A Moran’s I close to zero suggests no autocorrelation (values of the variable considered are randomly located), and a larger negative Moran’s I suggests that similar values of the variable considered tend to be further apart than expected from a random spatial distribution. The Moran’s I statistic is tested against the null hypothesis of no spatial autocorrelation, and will vary with the number of neighbouring points in the calculation, with more points giving weaker autocorrelations (Kalogirou, 2019). 
+
+The basic Moran’s I is a global autocorrelation, across the whole spatial dataset being analysed. The Local Moran’s I can also be calculated, and shows the extent of significant spatial clustering of similar values (of the variable considered) around each observation. The two examples in Figure 3.12 show Local Moran’s I as map symbols for the soil pH and EC data which we have already seen in Figure 3.4. Interestingly, at the urban parkland location in Figure 3.12, soil pH at most sampling points is spatially associated with similar values, but EC is not.
+
+Spatial autocorrelation statistics, usually Moran’s I, can be calculated using various GIS and statistical software, including several packages which add functionality to R.
+
+```{r}
+require(lctools)
+# moran's i using lctools package ####
+# sv17soil <- read.csv("C:/Users/00028958/LocalData/Dropbox (Ratey at UWA)/R Projects/Urban soils text/sv17soil.csv")
+data_temp <- na.omit(sv17soil[,c("Easting", "Northing", "EC")])
+Coords <- cbind(data_temp$Easting, data_temp$Northing)
+bw <- 5
+mI <- moransI(Coords, bw, data_temp$EC)
+moran.table <- matrix(data=NA, nrow=1, ncol=6)
+col.names <- c("Moran's I", "Expected I", "Z resamp", 
+               "P-val resamp", "Z rndmztn", "P-val rndmztn")
+colnames(moran.table) <- col.names
+moran.table[1,1] <- mI$Morans.I
+moran.table[1,2] <- mI$Expected.I
+moran.table[1,3] <- mI$z.resampling
+moran.table[1,4] <- mI$p.value.resampling
+moran.table[1,5] <- mI$z.randomization
+moran.table[1,6] <- mI$p.value.randomization
+print(moran.table, digits = 4)
+rm(moran.table)
+```
+
+```{r spatial autocorrelation maps, fig.height=7, fig.width=13.6}
+require(lctools)
+require(geoR)
+require(OpenStreetMap)
+require(knitr)
+par(mfrow = c(1,2), mar=c(4,4,1,1), mgp=c(2, 0.7, 0), 
+    font.lab = 2, lend = "square", tcl = 0.5, lwd = 1)
+data_temp <- na.omit(sv17soil[,c("Easting", "Northing", "EC")])
+Coords <- cbind(data_temp$Easting, data_temp$Northing)
+local_moran_sv17soil_EC <- l.moransI(Coords,6,data_temp$EC,
+                                     scatter.plot = FALSE)
+plotdata <- as.data.frame(cbind(Coords[,1], Coords[,2], local_moran_sv17soil_EC$Ii, local_moran_sv17soil_EC$p.value))
+colnames(plotdata) <- c("Easting", "Northing", "MoranI", "p_value")
+# head(plotdata)
+pos0 <- subset(plotdata, plotdata$MoranI>0)
+neg0 <- subset(plotdata, plotdata$MoranI<0)
+#
+plot(SV.mapboxO.utm, removeMargin = FALSE)
+axis(1, mgp=c(2, 0.5, 0), cex.axis = 1.3)
+mtext("Easting (UTM Zone 50, m)", 1, 2, font = 2, cex = 1.6)
+axis(2, mgp=c(2, 0.3, 0), cex.axis = 1.4, 
+     at = seq(6466300, 6466700, 100), 
+     labels = seq(6466300, 6466700, 100))
+mtext("Northing (UTM Zone 50, m)", 2, 2, font = 2, cex = 1.6)
+box()
+with(pos0, symbols(Easting, Northing, circles = sqrt(MoranI*10), 
+                   inches = F, fg = "blue3", bg = "#00008080", add= TRUE))
+with(neg0, symbols(Easting, Northing, squares = sqrt(MoranI*-20), 
+                   inches = F, fg = "red3", bg = "#80000080", add= TRUE))
+rect(391030, 6466225, 391180, 6466445, 
+     col = "grey88", border = "white", lwd = 9)
+symbols(c(391055, 391055), c(6466360, 6466320), circles = sqrt(c(10, 1)*10),
+        inches = F, fg = "blue3", bg = "#00008080", add= TRUE)
+text(c(391045, 391055, 391055), c(6466410, 6466360, 6466320), 
+     pos = 4, labels = c("Moran's I\nfor soil EC", "10", " 1"), 
+     cex = 1.2, offset = 1)
+legend("bottomleft", bty = "n", inset = 0.03, cex = 1.2,
+       legend = c("Positive I", "Negative I"),
+       pch = c(21, 22), pt.cex = c(2, 1.7),
+       col = c("blue3", "red3"), pt.bg = c("#00008080", "#80000080"),
+       box.col = "white", box.lwd = 2, bg = "#c8d0c8")
+# -=-=-=-=-= now for pH =-=-=-=-=-=-
+data_temp <- na.omit(sv17soil[,c("Easting", "Northing", "pH")])
+Coords <- cbind(data_temp$Easting, data_temp$Northing)
+local_moran_sv17soil_pH <- l.moransI(Coords,6,data_temp$pH,
+                                     scatter.plot = FALSE)
+plotdata <- as.data.frame(cbind(Coords[,1], Coords[,2], local_moran_sv17soil_pH$Ii, local_moran_sv17soil_pH$p.value))
+colnames(plotdata) <- c("Easting", "Northing", "MoranI", "p_value")
+# head(plotdata)
+pos0 <- subset(plotdata, plotdata$MoranI>0)
+neg0 <- subset(plotdata, plotdata$MoranI<0)
+#
+plot(SV.mapboxO.utm, removeMargin = FALSE)
+axis(1, mgp=c(2, 0.5, 0), cex.axis = 1.3)
+mtext("Easting (UTM Zone 50, m)", 1, 2, font = 2, cex = 1.6)
+axis(2, mgp=c(2, 0.3, 0), cex.axis = 1.4, 
+     at = seq(6466300, 6466700, 100), 
+     labels = seq(6466300, 6466700, 100))
+mtext("Northing (UTM Zone 50, m)", 2, 2, font = 2, cex = 1.6)
+box()
+with(pos0, symbols(Easting, Northing, circles = sqrt(MoranI*10), 
+                   inches = F, fg = "blue3", bg = "#00008080", add= TRUE))
+with(neg0, symbols(Easting, Northing, squares = sqrt(MoranI*-20), 
+                   inches = F, fg = "red3", bg = "#80000080", add= TRUE))
+rect(391030, 6466225, 391180, 6466445, 
+     col = "grey88", border = "white", lwd = 9)
+symbols(c(391055, 391055), c(6466360, 6466320), circles = sqrt(c(10, 1)*10),
+        inches = F, fg = "blue3", bg = "#00008080", add= TRUE)
+text(c(391045, 391055, 391055), c(6466410, 6466360, 6466320), 
+     pos = 4, labels = c("Moran's I\nfor soil pH", "10", " 1"), 
+     cex = 1.2, offset = 1)
+legend("bottomleft", bty = "n", inset = 0.03, cex = 1.2,
+       legend = c("Positive I", "Negative I"),
+       pch = c(21, 22), pt.cex = c(2, 1.7),
+       col = c("blue3", "red3"), pt.bg = c("#00008080", "#80000080"),
+       box.col = "white", box.lwd = 2, bg = "#c8d0c8")
+
+rm(list = c("data_temp", "plotdata", "pos0", "neg0"))
+```
+
+**Figure 3.12**. Local Moran's I autocorrelation maps for the soil pH (left) and EC (right) data in Figure 3.4. Larger positive values of local Moran’s I imply significant spatial clustering of similar values; negative local Moran’s I imply significant spatial clustering of dissimilar values. Global Moran’s I (5 neighbours) for pH is positive and significant (p ≤ 0.001,.), but for EC is near zero and p > 0.05 (graphics and data by Andrew Rate). 
+
+### 3.3.3 Variograms and kriging
+The variogram, simplistically, is the relationship between the variance between sample points, and the distance separating those sample points. In many instances, it is desirable to predict a soil property at locations where samples have not been taken, and this requires some assumption(s), usually a mathematical model, about how that soil property varies with distance. This information is actually provided by the variogram. In many cases the form of the variogram relationship can be simulated adequately with a mathematical function. The variogram function can then be used to interpolate between points – a process known as kriging (after the originator of the method and pioneer of geostatistics, Professor Danie Krige). Variograms and kriging are summarised expertly by Oliver and Webster (, 2014 #4363) and Reimann et al. (, 2008 #3027). Webster and Oliver (, 1993 #4365) argue that at least 100 observations (and preferably more) are needed for kriging interpolation, based on variogram analysis to establish the relationship between sample points as a function of separation distance. The United States Environmental Protection Agency (, 2002 #3984) reports that, for variograms and kriging,  stratified sampling can have a lower sample number requirement than a simple grid, but that kriging accuracy is similar for all sampling designs.
+
+Figure 3.13 shows some of the key concepts of variogram analysis. There is some semivariance that exists even for very closely-spaced samples, and this is called the “nugget”. This semivariance increases with increasing distance between samples to a limiting value called the “sill”. At some distance there is no increase in semivariance (which then approaches the variance of the complete dataset), and this distance is called the “range”, the value of which depends on the mathematical model used to describe the semivariance-distance relationship. The “practical range”, the distance at which samples are independent, is related to the model range by a factor dependent on the model equation.
+
+```{r variogram cloud bins model, fig.height=6, fig.width=9}
+par(mar = c(3, 3, 1, 3), font.lab = 2, mgp = c(1.7, 0.3, 0), tcl = 0.5,
+    cex.lab = 1.6, cex.axis = 1.4, xaxs = "i", yaxs = "i",
+    lend = "square", ljoin = "mitre")
+plot(bin.sv17soil.pH$v ~ bin.sv17soil.pH$u, pch = 3, lwd = 4, 
+     col = "blue", cex = 1.3, xaxt = "n", yaxt = "n",
+     xlab = "Distance (m)", ylab = "",
+     xlim = c(0, 250), ylim = c(0, 0.6))
+axis(1)
+axis(2, col = "blue", col.ticks = "blue")
+axis(4, col = "grey60", col.ticks = "grey40", mgp = c(1.6, 0.5, 0), 
+     at = seq(0.1, 0.6, 0.1), 
+     labels = seq(0.1, 0.6, 0.1)*4)
+mtext("Semivariance (binned)", 2, 1.7, cex = 1.6, font = 2, col = "blue")
+mtext("Semivariance (cloud)", 4, 1.8, cex = 1.6, font = 2, col = "grey40")
+# cloud.sv17soil.pH <- variog(geo.sv17soil.pH, 
+#                             option="cloud", bin.cloud=T,
+#                           estimator.type="modulus", 
+#                           trend="1st", max.dist=240.) #####  , breaks=10^(seq(0,4,by=0.29))
+abline(v = seq(18.46154,240, length.out = 13), col = "grey70", lty = 2)
+points(cloud.sv17soil.pH$v/4 ~ cloud.sv17soil.pH$u, pch = 1, cex = 0.8, col = "grey60")
+#
+lines.variomodel(cov.model = "exp", cov.pars = c(0.33,75.), nugget = 0.06, lwd = 2,
+                 col="blue", max.dist=240.)
+abline(h = 0.06, lwd = 2, col = "red3", lty = 2)
+abline(h = 0.39, lwd = 2, col = "red3", lty = 2)
+points(bin.sv17soil.pH$v ~ bin.sv17soil.pH$u, pch = 3, lwd = 4, 
+     col = "blue", cex = 1.3)
+arrows(12, 0, 12, 0.06, lwd = 2, col = "red3", code = 3, length = 0.15)
+text(12, 0.03, pos = 4, labels = "Nugget semivariance", 
+     col = "red3", cex = 1.6)
+arrows(12, 0.06, 12, 0.39, lwd = 2, col = "sienna", code = 3, length = 0.15)
+text(12, 0.35, pos = 2, labels = "Sill semivariance", 
+     col = "sienna", cex = 1.6, srt = 90, offset = 0.8)
+text(240,0.02, cex = 1.4, pos=2, labels = paste("Practical range = ",
+                             round(variofit(cov.model = "exp", 
+                                      ini.cov.pars = c(0.33,75.),
+                                      nugget = 0.06, max.dist=240.,
+                                      messages = FALSE, 
+                                      vario = bin.sv17soil.pH)$prac,1),"m"))
+legend("topleft", legend = c("Individual mean square differences (cloud)",
+                             "Mean square differences in bins",
+                             "Exponential variogram model"),
+       pch = c(1, 3, NA), pt.lwd = c(1, 4, NA), lwd = c(NA, NA, 2),
+       col = c("grey60", "blue", "blue"), pt.cex = c(0.9, 1.3, NA),
+       cex = 1.5, inset = 0.02, box.col = "grey90", box.lwd = 2)
+```
+ 
+Figure 3.13. The empirical variogram used to interpolate the soil pH in Figure 3.4. The individual mean square differences are plotted at all possible pairwise distances between points up to the defined maximum distance (240 m, where the maximum possible pairwise distance at the site was 599 m). Vertical dashed lines represent the boundaries of the distance intervals (‘bins’) used to calculate the binned variogram for fitting the exponential model. The model parameters were: nugget = 0.06, sill = 0.33, range = 75 m (practical range = 225 m). 
+
+Kriging and the associated variogram analysis can be very subjective in practice (Bohling, 2005 #1234). Real soil data do not behave in an ideal fashion (see the scatter of binned points in Figure 3.13), and there is no systematic way to make the choices of:
+•	The number of inter-sample distance categories, or ‘bins’
+•	The maximum inter-sample distance to be considered in variogram analysis (Reimann *et al*. (2008) recommend the actual maximum inter-sample distance × approximately 0.4)
+•	The function used to model the variogram: exponential, spherical, Gaussian, etc.
+•	The mathematical algorithm for fitting the function to the variogram, *e.g*. using least squares, or maximum likelihood, or even heuristically?
+•	Whether the fitting process should be weighted (and there are several options)
+•	Whether to fix key variogram parameters such as the nugget or sill (see Figure 3.13)
+•	Whether to assume an underlying trend in the data
+•	Whether the variation with distance is the same in all directions (that is, whether an isotropic or anisotropic variogram model should be used)
+•	. . . and so on.
+
+Variogram model fitting can, therefore, appear to be more like an art than a science (Bohling, 2005). Alternative forms of interpolation (*e.g*. splines, inverse distance) to predict soil properties between sampling points are not universally recommended, however, and can result in unusual predictions depending on the mathematical interpolation method used.
+
+## 3.4	Comparison of sampling strata
+### 3.4.1	Comparing mean or median values
+
+The most convenient way of comparing between strata is to use some form of statistical means comparison. The first step of this analysis would be to assess some parameters describing the distribution of the variable of interest. We do this because standard statistical means comparison methods such as a t-test and analysis of variance (ANOVA) assume that the variable is normally distributed, and that the variance is approximately equal in each stratum. We use a method such as the Shapiro-Wilk test to test for normality (against the null hypothesis that the distribution is not different from a normal distribution); it may be possible to transform variables to achieve normality (see section 1.3.3.2 below). We also apply the Bartlett test or equivalent to test for heteroscedasticity (against the null hypothesis that the variance in each stratum is equal, i.e. homoscedastic). The conventional (parametric) statistical tests include the t-test (commonly implemented as Welch’s t, for heteroscedastic variables) for two-level comparisons, and the f-test as either standard ANOVA (or Welch’s f for heteroscedastic variables) for comparisons with three or more levels. If the assumptions of normally distributed variables are not met, then non-parametric comparisons such as the Wilcoxon (for two-level comparisons) or Kruskal-Wallis (for multiple-level comparisons) tests can be used. The null hypothesis for all means comparison tests is that means in each stratum are equal, and the result of the tests is the probability that the null hypothesis is true for the population, given the values and variability that we have measured in our sample.
+
+```{r annotated boxplot, fig.height=5, fig.width=8}
+require(Rmisc)
+par(mar=c(4,4,1,1), mgp=c(2,0.25,0), mfrow=c(1,1), font.lab=2, 
+    lend="square", ljoin="mitre", las=1, tcl = 0.5)
+palette(c("black","red3","darkgreen","blue2","#DDEE99",
+          "#FFEFA3","#e0e0e0","white","slategray1","thistle",
+          "purple","sienna4"))
+windowsFonts(nar = "Arial Narrow")
+# 
+# change data object, variable & factor names to suit your data 
+sv18$Type <- factor(sv18$Type, levels = c("Soil","Street Dust","Sediment"))
+ci0 <- group.CI(Ca.log~Type, data=sv18)
+par(mar = c(3.5,3.5,1,1), mgp = c(1.7,0.3,0), tcl = 0.3)
+boxplot(sv18$Ca.log~sv18$Type, varwidth=T, col=c(6, 7, 9),
+        ylab=expression(bold(paste(log[10],"(Ca, mg/kg)"))),
+        cex.lab=1.5, cex.axis=1.25, xlab = "",
+        xlim = c(-0.5,3.5), ylim = c(1.5,4.9)) # , log="y", notch=T, xlab="Sampling Zone"
+mtext("Sample Type", 1, 2, font = 2, cex = 1.5)
+
+# use arrow function to make background for [optional] error bars
+arrows(x0=seq(1,NROW(ci0)), y0=ci0[,3], y1=ci0[,2], 
+       col=8, angle=90, length=0.1, lwd=6) # optional
+arrows(x0=seq(1,NROW(ci0)), y0=ci0[,3], y1=ci0[,4], 
+       col=8, angle=90, length=0.1, lwd=6) # optional
+#
+# draw lines to join points first, so the points overplot lines
+lines(seq(1,NROW(ci0)), ci0[,3], col=8, lwd=3, 
+      type="c") # optional
+lines(seq(1,NROW(ci0)), ci0[,3], col=1, lwd=1, 
+      type="c", lty=3) # optional
+
+# use arrow function to make actual [optional] error bars
+arrows(x0=seq(1,NROW(ci0)), y0=ci0[,3], y1=ci0[,2], 
+       col=12, angle=90, length=0.1, lwd=2)
+arrows(x0=seq(1,NROW(ci0)), y0=ci0[,3], y1=ci0[,4], 
+       col=12, angle=90, length=0.1, lwd=2)
+
+# draw the points with white background for contrast
+points(seq(1,NROW(ci0)), ci0[,3], col=8, pch=1, lwd=3, cex=1.6)
+points(seq(1,NROW(ci0)), ci0[,3], col=12, pch=19, lwd=1, 
+       cex=1.2)
+n5 <- fivenum(subset(sv18$Ca.log, subset = sv18$Type=="Soil"), na.rm=T)
+lines(c(0.3,1),rep(n5[1],2), lty = 3)
+text(-0.6, n5[1], labels = "Greater of minimum or\nQ1 - 1.5×IQR", 
+     pos = 4, cex = 1.2, family = "nar")
+lines(c(0.4,1),rep(n5[2],2), lty = 3)
+text(-0.6, n5[2], labels = "Lower quartile (Q1)", pos = 4, 
+     cex = 1.2, family = "nar")
+lines(c(0.1,1),rep(n5[3],2), lty = 3)
+text(-0.6, n5[3]-0.05, labels = "Median (Q2)", pos = 4, 
+     cex = 1.2, family = "nar")
+lines(c(0.4,1),rep(n5[4],2), lty = 3)
+text(-0.6, n5[4]+0.05, labels = "Upper quartile (Q3)", pos = 4, 
+     cex = 1.2, family = "nar")
+lines(c(0.3,1),rep(n5[5],2), lty = 3)
+text(-0.6, n5[5], labels = "Lesser of maximum or\nQ3 + 1.5×IQR", 
+     pos = 4, cex = 1.2, family = "nar")
+arrows(0.5, n5[2], 0.5, n5[4], col = "grey60", length = 0.1, code = 3)
+text(0.5, (n5[2]+n5[4])/2, labels = "IQR", srt = 90, 
+     col = "grey60", cex = 0.8, pos = 2)
+points(c(-0.3,3), c(2.1, 3.9), pch = c(19,1), 
+       col = c(12,1), cex = c(1.5,1))
+arrows(-0.3, 1.6, -0.3, 1.9, col = 12, length = 0.1, angle = 90, lwd = 2, code = 3)
+text(c(-0.25, -0.25), c(2.1, 1.75), pos = 4, labels = c("Mean", "95% CI"))
+arrows(3, 4.2, 3, 3.95, col = "grey60", length = 0.1)
+text(3, 4.2, labels = "Potential outlier\n(> Q3 + 1.5×IQR)", 
+     pos = 3, cex = 1.2, family = "nar")
+
+# delete temporary objects
+rm(list = c("ci0","n5"))
+```
+ 
+Figure 3.14. Graphical comparisons of means and median concentrations of calcium in different sample types in an urban parkland, using an annotated and enhanced version of a standard 'Tukey' box plot. IQR = inter-quartile range (data and graphic by Andrew Rate). 
+
+### 3.4.2	Transforming variables
+In order to meet the assumptions of parametric statistical tests (*e.g*. t-tests, ANOVA/f-test), variables should be normally distributed. This is seldom the case for soil measurements (except sometimes soil pH), which commonly show positively skewed distributions. For continuous positively skewed variables, such as the concentration of a soil constituent, we tend to use transform variables either to logarithms (base 10 is most convenient and interpretable), or use a power function of the variable for transformation ($x_{transformed}$ = $x^a$, where a is the power term). The power term which transforms a variable to have a distribution “closest” to normal can be estimated from the Box-Cox algorithm, which is implemented in most statistical software. The power term a can be negative, which reverses the ordering of the variable (i.e. the greatest value will become the least, and vice versa). In this case the ordering of the original variable can be preserved by including a factor of −1 in the power transform calculation ($x_{transformed}$ = $−(x^a)$).
+
+For different types of variables, particular transformations are required. For example, variables which are counts rather than continuous variables should not be transformed; instead alternative statistical models such as Generalised Linear Models assuming a Poisson or negative binomial distribution should be used (O’Hara and Kotze, 2010). Compositional variables (including concentrations, or proportions of land surface coverage) are technically part of a fixed-sum closed set. For example, with data on percent land use over an urban area, all percentages add up to 100%!. If uncorrected, fixed sum closure can lead to very misleading conclusions, especially when relationships between variables are being investigated, as in correlation analyses or multivariate methods such as Principal Component Analysis. Closed data require specialised transformations to remove closure, such as calculation of centered or additive log-ratios (Reimann *et al*., 2008). The example in Figure 3.15 shows the relationship between phosphorus (P) and iron (Fe) in soil/sediment materials in an acid sulfate environment. Without correcting for compositional closure, the P vs. Fe plot implies that P increases as Fe increases. Correcting for compositional closure, however, suggests the opposite, with P negatively related to Fe! In this case, if we had used conventional transformations, we might have come to a very wrong conclusion about the sediment properties affecting phosphorus.
+ 
+```{r}
+par(mfrow=c(2,5), mar=c(3,0,1.,0), oma=c(0,4,0,1), mgp=c(1.4,0.3,0.0), lend=2, ljoin=1, 
+    font.lab=2, cex.axis=1, cex.lab=1.2, cex=1., lwd=1, tcl=-0.2)
+palette(c("black","sienna","darkolivegreen","grey92"))
+# closed
+plot(nx.clr$Fe.oes, nx.clr$REE.ms, log="xy", pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
+     xlab=expression(bold(paste(Fe[closed]," (mg/kg)"))), lwd=2)
+mtext(side=2, line=1.4, expression(bold(paste(Sigma,REE[closed]," (mg/kg)"))), cex=.8)
+plot(nx.clr$P.oes, nx.clr$REE.ms, log="xy", yaxt="n", pch=c(2,15)[nx.clr$Type],
+     col=c(2,3)[nx.clr$Type], xlab=expression(bold(paste(P[closed]," (mg/kg)"))), lwd=2)
+plot(nx.clr$S.oes, nx.clr$REE.ms, log="xy", yaxt="n", pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
+     xlab=expression(bold(paste(S[closed]," (mg/kg)"))), lwd=2,
+     ylab=expression(bold(paste(Sigma,REE[closed]," (mg/kg)"))))
+plot(nx.clr$S.oes, nx.clr$REE.ms, type="n", ann=F, xaxt="n", yaxt="n", bty="n")
+legend("topleft",legend=c("Dredge\nspoil","Sediment"), pch=c(2,15), col=c(2,3), bty="n",
+       inset=0.01, cex=1.2, pt.lwd=2, box.col=4, box.lwd=2, y.intersp=1.4, x.intersp=0.6)
+plot(nx.clr$Fe.oes, nx.clr$P.oes, log="xy", pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
+     lwd=2, xlab=expression(bold(paste(Fe[closed]," (mg/kg)"))),
+     ylab=expression(bold(paste(P[closed]," (mg/kg)"))))
+mtext(side=2, line=1.4, expression(bold(paste(Sigma,P[closed]," (mg/kg)"))), cex=.8)
+# clr
+plot(nx.clr$Fe, nx.clr$REE, pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
+     xlab=expression(bold(Fe[clr-transformed])), lwd=2)
+mtext(side=2, line=1.4, expression(bold(paste(Sigma,REE[clr-transformed]))), cex=.8)
+plot(nx.clr$P, nx.clr$REE, yaxt="n", pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
+     xlab=expression(bold(P[clr-transformed])), lwd=2)
+plot(nx.clr$S, nx.clr$REE, yaxt="n", pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
+     xlab=expression(bold(S[clr-transformed])), lwd=2,
+     ylab=expression(bold(paste(Sigma,REE[clr-transformed]))))
+plot(nx.clr$S, nx.clr$REE, type="n", ann=F, xaxt="n", yaxt="n", bty="n")
+legend("topleft",legend=c("Dredge\nspoil","Sediment"), pch=c(2,15), col=c(2,3), bty="n",
+       inset=0.01, cex=1.2, pt.lwd=2, box.col=4, box.lwd=2, y.intersp=1.4, x.intersp=0.6)
+plot(nx.clr$Fe, nx.clr$P, pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type], lwd=2,
+     xlab=expression(bold(Fe[clr-transformed])), ylab=expression(bold(P[clr-transformed])))
+mtext(side=2, line=1.5, text=expression(bold(P[clr-transformed])), cex=1.2)
+palette('default')
+```
+ 
+Figure 3.15. Comparison of relationships between P and Fe for (a) compositionally closed concentrations showing a positive relationship, and (b) concentration variables corrected for compositional closure using centered log-ratios showing a negative relationship. Data from Xu *et al*. (, 2018 #4721); graphic by Andrew Rate.
+
+The business of comparing means for environmental variables is possibly more complicated than we might have expected (as described above) but, to choose the correct method, the criteria are logical. The flow diagram in Figure 3.16 shows how we can make the choice using three relatively simple questions: How many groups do we want to compare? Are our variables (transformed if necessary) normally distributed? and, Does the variance of our variable depend on which group it is in? Once we have been guided in this way to the correct statistical test, we have two more questions that need to be asked. First, if we have more than two groups, which means are different from each other? We can answer this question rigorously using “pairwise comparison” tests, as described below. Second, do we have a meaningful difference, or just a statistical one? This is deciding whether we have a large or small “effect size”, and we discuss this below as well.
+
+ 
+Figure 3.16. Decision tree for choosing appropriate statistical tests for overall and pairwise comparisons of mean values of measurements between different sampling strata. Functions from the R statistical computing environment (R Core Team, 2019 #2631) are shown for various tests in monospaced font (graphic by Andrew Rate). 
+
+### 3.4.3	Pairwise comparisons
+
+The means comparison tests above will help us to make a decision about whether the mean value of some variable differs between strata. For sites with exactly two strata (where we would use a t-test or Wilcoxon test) the test tells us if the difference in means is between all combinations of strata – since there is only one possible combination! In most sites where we study urban soils, we commonly have sites with 3 or more strata, and we want to compare mean values of our measurements between the strata. Ideally we would like to know which means are different from the others (not just if we can reject the null). So, if the f-test or Kruskal-Wallis test allows rejection of the statistical null hypothesis (i.e., equal means), we usually follow up with a pairwise test. For well-conditioned data where the assumptions of ANOVA are met, we can use the Tukey set of statistical analyses (least significant difference, and rigorous pairwise p-values). For heteroscedastic variables this is not strictly allowed, but we can still apply something like a pairwise t test with adjustment of p-values for multiple comparisons. Finally, with a non-parametric (e.g. Kruskal-Wallis) test of three or more means, we can use pairwise Wilcoxon tests with adjustment of p-values for multiple comparisons, or a specialised pairwise comparison test such as Conover’s test.
+
+### 3.4.4	Effect sizes for comparing means
+
+We cannot rely on just rejection of the null hypothesis of equal means, since it is mathematically possible for a statistically significant difference to exist when the practical difference is meaningless. In some cases an effect size statistic, of which the most common is Cohen’s d (Equation 3.1), can help us assess the magnitude of the difference between central values (means or medians). Cohen’s d is a standardised measure of the difference between means for exactly two groups (e.g. strata), and its value is normally categorised as follows: d < 0.2 Negligible; 0.2 < d < 0.5 Small; 0.5 < d < 0.8 Medium; d > 0.8 Large. Most contemporary statistical software allows calculation of Cohen’s d for binary (two group) comparisons; for multiple (pairwise) comparisons, some custom coding (e.g. in R) may be required. (Note that the size of the p-value for a t-test, ANOVA or equivalent does not represent an effect size! We cannot assume we have a larger effect just because we have a smaller p-value.) 
+
+$Cohen’s\;  d  =	    {(mean_{group 1} − mean_{group 2}) \over {Pooled\; standard\; deviation}}$ 		3.1
+		
+## 3.5	Relationships between variables
+
+In the spatial context we can use correlation or regression statistics to assess relationships between a soil variable and distance (e.g. distance from a potential or suspected source of contamination). We also investigate relationships between variables for other reasons, such as finding which observations do not follow the expected relationship, and we will look at an example of this in Chapter 6. For now, we will go through the basics of correct application of correlation and regression analyses.
+
+### 3.5.1	Correlation analysis
+
+The most commonly used measure of correlation between two variables (bivariate) is Pearson’s correlation coefficient, r, which can vary between −1 and 1, with an r value of zero meaning no correlation. The assumptions behind calculation of Pearson’s r require that each variable is normally distributed; sometimes this can be achieved with an appropriate transformation (e.g. taking logarithms, or a power function, bearing in mind the discussion in section 3.4.2 above). Variables which are unable to be transformed to a normally distributed variable are unsuitable for Pearson’s correlation analysis, but we can use a non-parametric method, Spearman’s correlation, in such cases. Spearman’s correlation is based on comparison of ranks within each ordered variable, and is therefore independent of transformation. The p-value for correlation tests is for the null hypothesis of no relationship between the pair of variables, against the existence of a true correlation in the population from which the sample is taken.
+
+Very often, it is useful for exploratory data analysis to generate a correlation matrix, which calculates a correlation coefficient (e.g. Pearson’s or Spearman’s) for all possible pairwise relationships between the variables selected. These are subject to the same requirements in terms of the distribution of variables as bivariate correlations, with the additional precaution that p-values should be adjusted upwards to account for the increased likelihood of Type 1 errors (false positives) when multiple comparisons are made. Most statistical software will calculate these corrected p-values, for example using Holm’s method.
+
+With any correlation analyses, it is essential to check the relationships graphically. It is easy to misinterpret r values if the data behave unexpectedly. For example, outliers may still exist in transformed variables, which have a large influence  on the value of Pearson’s r. The variables may show grouping or bimodality, so that the true relationships are masked by considering the data as whole, or a strong relationship may exist which is non-linear as assumed in the Pearson correlation. Inspection of (appropriately transformed) bivariate plots can identify these types of issues, and most statistical software will allow plotting of scatterplot matrices to streamline this task.
+
+### 3.5.2	Regression analysis
+
+If a relationship between variables exists, it should be possible to estimate, or predict, one variable from another. This prediction is the goal of regression models; in their simplest form of bivariate linear regression, they are conceptually similar to Pearson’s correlation, but the focus is on the ability of the regression model (commonly a mathematical equation) to predict one variable, the “dependent variable”, from one or more “predictor variables”. A thorough discussion of regression models would itself take a whole book, so we will not do that here! Instead we will look at a sequence of steps we can take to generate and assess different types of linear regression models, foreshadowing the example in Chapter 6, Figure 6.10; the procedures in all of these steps should be available in any up-to-date statistical software. The aim of our regression model is to predict arsenic (As) concentration in soil, from the other soil measurements we have made. The dataset includes soil EC and pH, plus concentrations of numerous major and trace elements.
+
+The general form of the multiple or simple  linear regression models we will discuss is:
+
+$y = a + \sum_{i=1}^n b_i x_i + e $ 			3.2
+
+where y is the dependent variable to be predicted; n is the number of predictor variables (which can equal 1); a is the constant “intercept” term; $x_i$ are the predictor variables; $b_i$ are the coefficients for each predictor, and e is the error term or “residual”.
+
+Initial assumptions and transformations. For a valid linear regression model, the residuals need to be normally distributed. In practice we can increase the likelihood that this will be the case by transforming our variables to remove skewness, commonly with a log10 transformation. Since the goal is prediction, rather than analysis of the relationship itself, we can argue that issues like compositional closure can be ignored. In our example, we $log_{10}$-transform all variables except soil pH which is used untransformed.
+
+*Choosing predictors*. The next decision that needs to be made is what the predictor variable(s) should be. Realistically, we would normally try to predict a variable that is difficult, unreliable, or expensive to measure, since we would usually rather than have an actual measurement than an estimate from prediction. The predictor variables, then, would logically be those which are more easily, reliably, and/or inexpensively measured. More importantly, we should try to choose predictors that make sense in the real world. For example, the concentrations of trace elements in soils are often closely related to one another due to similar geochemistry or common sources. In reality, though, it’s unlikely that one trace element would have an effect on another in soils since the concentrations of both are too low. In soils, then we tend to use “bulk soil” properties such as pH, clay content, organic carbon and other major element content, EC, redox potential, and so on, as predictors, since they fulfil both the “easily measured” and “realistic effect” criteria. For our example, we want to predict arsenic (As) concentrations, and our initial list of predictors is: pH, EC, Al, Ca, Fe, K, Mn, Na, P, and S.
+
+*Collinearity of predictors*. The predictors we select should not be linearly related to one another (collinear). The criteria we use to assess this are the Pearson correlations (which should be ≤ 0.8 between any pair of predictors) and Variance Inflation Factors (VIF), which estimate how much greater the variance of a regression coefficient (the $b_i$ values in Equation 3.2) is, due to collinearity. There are various rules-of-thumb for selecting predictors on the basis of VIF: a value above 10 suggests that a predictor should be removed; 4 < VIF < 10 should be noted. In our example, the following pairs of predictor variables have Pearson’s r greater than 0.8: Al-Fe, Fe-Mn, and Mn-P. The variance inflation factors are listed in Table 3 1. We will choose to remove Al and Mn from the “maximal” regression model, but different variables could have been removed.
+
+Table 3 1 Variance inflation factors (VIF) for a multiple regression model predicting $As_{log}$ from pH, EClog, Allog, Calog, Felog, Klog, Mnlog, Nalog, Plog, and Slog (subscript log denotes $log_{10}$ transformation).
+Predictor	pH	EClog	Allog	Calog	Felog	Klog	Mnlog	Nalog	Plog	Slog
+VIF	3.163	1.911	8.123	5.571	7.982	3.298	9.575	7.997	7.768	5.774
+
+Refinement of predictors. Not all of the possible predictors that we select will have a significant influence on the value of our dependent variable. The output of statistical software (e.g. Table 3 2) usually has a p-value from a test of significance for each predictor (using the null hypothesis that the predictor has no effect on the dependent variable), as well as an analogous null-hypothesis significance test for the model as a whole. Inspection of this output may imply that that some predictors have no effect. To remove non-significant predictors, we use a stepwise regression algorithm, which systematically adds and removes predictors from a set of models, using an “information criterion” to select the best subset of predictors which all contribute “information” or predictive ability to the model. The stepwise algorithm can be configured to add predictors from a list to a basic model (forward selection), or to remove predictors from a maximal model, or both. Ideally, different implementations of stepwise procedures, using the same data, should arrive at the saem final answer.
+
+Table 3 2. Summary of final regression model predicting Aslog from initial predictors pH, EClog, Allog, Calog, Felog, Klog, Mnlog, Nalog, Plog, and Slog (subscript log denotes log10 transformation). Values explained in the text are in shaded cells with bold italic text. The same final set of predictors was obtained by either forward or backward stepwise selection of predictors in R (R Core Team, 2019 #2631).
+Residuals:	Min	1Q	Median	3Q	Max	
+	-0.300155	-0.082543	-0.00583	0.049328	0.296157	
+Coefficients:		Estimate	Std. Error	t value	Pr(>|t|)	
+	(Intercept)	-1.08038	0.31638	-3.415	0.001343	**
+	Felog	0.57608	0.05875	9.805	7.58E-13	***
+	pH	-0.06438	0.01821	-3.535	0.000944	***
+	EClog	-0.16794	0.07197	-2.333	0.024051	*
+	Slog	0.15322	0.07629	2.008	0.050487	.
+Signif. codes:  	*** ≤ 0.001	** ≤ 0.01	* ≤ 0.05	. ≤ 0.1		
+Statistics:	Residual standard error	 0.1245 on 46 degrees of freedom
+	Multiple R-squared	0.8155	    Adjusted R-squared	0.7994
+	F-statistic	 50.82 on 4 & 46 DF	  p-value	2.61E-16
+Predictor:	Felog	pH	EClog	Slog		
+VIF:	1.374	1.192	1.028	1.562		
+
+
+We can see in Table 3 2 that the null hypothesis of no prediction ability is rejected at p≤0.05 for all predictors in the final model except Slog (this relates to the different selection criteria for predictors in the stepwise procedure). The model is good at predicting As concentration; the multiple R² (r-squared) value is 0.8155, so nearly 82% of the variance in log10As is explained by the four predictors. We can also reject (p-value = 2.6×10−16, so p≤0.05) the null hypothesis of no prediction ability for the overall model. The VIF values are all close to 1, meaning negligible collinearity.
+Model checking. Many of the assumptions for regression relate to the residuals, and we use a number of diagnostic tests and/or plots (Figure 3.17) to assess these assumptions. First, the residuals have a median value close to zero (−0.0058, Table 3 2) and the mean residual value is 1.8×10−18. By applying a Shapiro-Wilk test to the residuals from the model we find that the null hypothesis (that the distribution is not different from a normal distribution) cannot be rejected, satisfying the assumption of normally distributed residuals. The VIF values are all close to 1 (Table 3 2), meaning negligible collinearity.
+
+ 
+Figure 3.17. Diagnostic plots for the final regression model predicting Aslog from predictors pH, EClog, Felog, and Slog (subscript log denotes log10 transformation). 
+
+The standard set of diagnostic plots (Figure 3.17) allows us to assess, visually, some further regression assumptions. The residuals vs. fitted plot checks that the mean residual is close to zero, and that there is no systematic trend in the residuals (this can be assessed separately by calculating residual autocorrelation; the autocorrelation coefficients should be close to zero). The normal Q-Q plot is a visual assessment of whether the residuals are normally distributed; the dotted straight line represents a perfect normal distribution with the same mean and standard deviation as the residuals, and the points lie approximately along this line, confirming the Shapiro-Wilk test result above. The scale-location plot assesses whether the residuals show homoscedasticity (i.e. the size of the residuals should be independent of the value of the dependent variable, measured or predicted). In our case there seems to be a “bulge” of greater residuals in the middle of the plot, suggesting that this assumption may not be fulfilled for our model (again, we can test for this in more detail separately). Finally, the residuals vs. leverage plot is one way of testing if any individual observation has an unexpectedly large influence on the model parameters. Cook’s Distance is a measure of the change in regression parameters when a point is removed; ideally its value should be zero. There are a number of rules-of-thumb defining excessively large Cook’s Distance values, e.g. 4/n, where n is the number of observations (points).
+The final regression model can be used in different ways. We can never use correlation or regression to make conclusions about whether one measurement causes another; “…correlation is not causation”. We could certainly use the soil pH, EC, and Fe and S contents, however, to predict As concentration with some accuracy. Actually, though, total As concentration is not so difficult to measure! We may choose to include regression models as part of more complex environmental simulation models where many parameters are required and we do not have access to data for all possible locations where prediction is required. One of the more powerful ways we can use regression models in urban environments is to make use of the deviations from the model – with well-chosen predictors, these can provide a good indication of truly unusual samples, and we look at an example of doing this in Chapter 6.
+
+ 
+ 
+Figure 3.18. Regressions predicting log10As from log10S, showing grouped (separate symbols, solid lines) and ungrouped (dashed line with shaded 95% confidence interval) regression models.
+
+ 
+Table 3 3. Summary and interpretation of ungrouped and grouped regression statistics.
+Ungrouped regression
+logAs = -0.905 + 0.587∙logS
+R² = 0.371, F statistic = 28.86 on 1 and 49 DF,  p-value: 2.13×10−6
+
+Grouped regression
+logAs = -0.621 + 0.478∙logS (Group 2)
+logAs = 1.38 − 0.419∙logS (Group 3)
+logAs = -1.54 + 0.894∙logS (Group 4)
+logAs = 2.85 + 1.53∙logS (Group 5)
+logAs = 2.85 − 0.959∙logS (Group 6)
+logAs = 0.11 + 0.0742∙logS (Group 7)
+R² = 0.802, F statistic = 14.3 on 11 and 39 DF,  p-value = 1.72×10−10
+
+Comparison of models
+	Res.Df     RSS	Df	Sum of Sq	F	Pr(>F)
+Ungrouped	49	2.43273	
+Grouped	39	0.76705	10	1.6657	8.469	3.928e-07
+(P-values is ≤0.05 so the null hypothesis, that the more complex model makes no improvement in prediction, can be rejected.)
+
+
+ 
+Of course, multiple regression is not the only variation on simple linear regression that we can make use of when studying urban soils. If we have different sampling strata (see Section 3.2.2 above), we can make use of our stratified sampling design in regression. We would not necessarily expect the same linear relationships between variables in different strata (which might, for instance include both industrial land and undisturbed nature reserves). In this case we can use grouped linear regression (see Figure 3.18 and Table 3 3), which effectively includes a separate intercept and coefficient(s) for each stratum within our data. 
+The general form of the grouped or simple linear regression models is similar to that for multiple regression:
+ 			3.3
+where the terminology is as for Equation 3.2, except that now we have a single predictor x with different intercepts (ai) and slopes (bi) for each group of observations.
+
+We should always check if the more complex model is actually better at prediction, or whether it is simply “over parameterised”. We can compare linear regression models by using analysis of variance (Table 3 3).
+3.5.3	Multivariate analyses
+It is quite common to measure many variables in studies of urban soils. In the sections above we have discussed how to analyse a dataset to interpret one variable at a time (although use of multiple linear regression does potentially use many variables to explain one other variable). Using various types of ordination analysis, we can use the information contained in multiple variables to create a reduced subset of variables containing nearly the same amount of information. Ordination methods are also referred to, for this reason, as “data reduction” methods.
+One of the earliest and most widely-used ordination methods for exploration and dimension-reduction of multivariate data is Principal Components Analysis (PCA; see the explanation in Box 3-2). Imagine a dataset with many samples (rows) and n continuous numeric variables (columns) which contain quantitative information about each sample such as concentrations, heights, or velocities, etc. For these n variables/dimensions the principal components calculation generates n new variables, or principal components, which are each a function of the set of all the original variables (so each principal component is defined by a weighting or coefficient for each of the original variables). We may choose to omit some variables from the analysis if they contain too many missing observations, or if there is another valid reason to doubt their integrity. Since each principal component is selected to account for successively smaller proportions of the multiple variance, it is usually the first few principal components which explain most of the variance and therefore contain the most useful information. We conventionally visualise this in a “scree plot” (Figure 3.20(a)), a kind of bar graph showing the decrease in variance accounted for by each component (the “eigenvalue”).
+
+Box 3-2 Principal Components Analysis
+ 
+Figure 3.19. Visualisation of Principal Components Analysis for three variables/dimensions x, y, and z: we can conceptualise an ellipsoid encapsulating the “cloud” of points (i.e. samples). The longest dimension (Principal Axis 1) of the ellipsoid, which accounts for the greatest proportion of multiple variance, is in the direction of its major axis and is a function of the variables x, y, and z. Principal Axis 2 must be orthogonal to Principal Axis 1, and is a different function of the variables x, y, and z which accounts for the next highest-possible proportion of multiple variance. Principal Axis 3 must be orthogonal to both Principal Axes 1 and 2, is a unique function of x, y, and z, and accounts for the remainder of multiple variance. For n variables/dimensions (n > 3), the analogy is an n-dimensional hyper-ellipsoid which has n orthogonal axes, which is very difficult to visualise.
+
+As well as the component variances, the useful results of principal components analysis include the variable weightings or “rotations” for each principal component. In addition, every individual observation (sample) is a multivariate point, the observation scores for all samples in each principal component based on the values of the variables used in PCA for that sample. It is conventional to plot both of these two types of output in a principal components “biplot”, as shown in Figure 3.20(b). Before discussing the biplot, we should note that the sign (positive or negative) of variable weightings and observation scores (i.e. the direction of the axes) is arbitrary and should not affect our interpretations.
+The principal components biplot is useful because the variable weightings group together for variables (measurements) that are related to one another. For example, in the biplot in Figure 3.20(b), the variables are mainly concentrations of elements (which have been corrected for compositional closure before PCA using a log-ratio transformation). These variables are shown as vectors (arrows) in the biplot of principal components PC1 and PC2, and elements which are geochemically related have vectors of similar length and/or direction. For example, the elements La, Ce, and Y are all geochemically similar rare-earth elements, and plot closely together on the biplot, and the same is true for Ca and Sr which commonly co-occur in carbonate minerals. The other main information we obtain from principal components biplots is from the observation scores. These will plot at locations similar to their dominant variables: for example, in Figure 3.20(b), the sediment samples all plot towards the left of the biplot in the same direction as the K, La, Ce, Y, S, and Fe variable weighting vectors. This suggests that they are characterised by greater values of these variables (for example, wetland sediments may contain higher concentrations of Fe, S, and rare-earth elements due to formation of sulfides and Fe and S cycling (Morgan, 2012 #3088)). 
+
+ 
+Figure 3.20. (a) Scree plot of component variances, and (b) biplot of the first two components, for principal components analysis on variables related to chemical properties of samples from an urban parkland. Concentration variables were transformed to centered log-ratios to remove compositional closure prior to calculation of principal components on scaled, zero-centred variables (graphic by Andrew Rate). 
+
+We have used an example based on soil chemical data, but many other types of numerical data can be used in principal components analysis. These types of datasets could include soil physical data, composition of vegetation or microbial communities, and so on, For example, a dataset with variables which measure different plant species composition might show, in a PCA biplot, grouping of wetland plant species in riparian sampling strata, weedy species in disturbed urban land, native species in reserves, and so on. (Note that variables such as percent species compositions would comprise a fixed-sum closed set, and would require a transformation to remove closure before rigorous multivariate data analysis such as PCA!).  The provision of information of this type makes ordination methods such as principal components analysis powerful tools for exploratory data analysis. Different algorithms for ordination of multivariate data are based on different criteria than the maximisation of multiple variance used in PCA, for example similarity or dissimilarity between samples. We will touch on different multivariate methods for data related to soil microbiology in Chapter 8. hopefully!
+
+3.6	Further Reading for Chapter 3
+Oliver, M.A., Webster, R., 2014. A tutorial guide to geostatistics: Computing and modelling variograms and kriging. Catena, 113: 56-69, doi:10.1016/j.catena.2013.09.006.
+Reimann, C., Filzmoser, P., Garrett, R.G., Dutter, R., 2008. Statistical Data Analysis Explained: Applied Environmental Statistics with R. John Wiley & Sons, Chichester, England, 343 pp.
+
+3.7	Chapter 3 Summary
+ 	 	Cities affect soil variability on a sub-continental or regional scale, reflecting the concentration of human populations and resources in urban environments. Cities themselves contain variable soils on the scale of whole metropolitan areas, localities, sites, and individual soil profiles, and these are related to the age of human habitation, and the types of activities conducted. Variation in soil properties with depth can inform us about site history, or the extent of anthropogenic additions to soil.
+ 	 	Sampling of soil needs to match the objective, that is, the type of information required. To capture regional- or metropolitan-scale soil variability, large systematic sampling exercises including hundreds or even thousands of samples are conducted. Studies of smaller spatial scales requires tens of samples at higher density, and depth variability is assessed with 2-30 vertical increments. Specific approaches are required to detect discrete hot-spots or sample pre-existing spatial strata.
+ 	 	Analysis of spatial data begins with visual analysis in the form of maps with layer(s) of soil property data, or scatterplots vs. distance along transects. More rigorous spatial data analysis techniques include variations of spatial autocorrelations, or construction of variograms which allow spatial prediction using kriging.
+ 	 	Other trends in spatial data, such as differences in soil parameters between strata, can be assessed with rigorously applied standard statistical techniques, both parametric and non-parametric, for comparison of central tendencies, assessing relationships, regression models, or multivariate ordination. For credible interpretation of urban soil data, care must be taken to ensure that the assumptions of each statistical method are met.
+
