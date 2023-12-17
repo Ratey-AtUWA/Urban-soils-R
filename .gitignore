@@ -4,4 +4,6 @@
 *.Rproj
 *.docx
 *.lnk
+*.html
+*.htm
 /images/*
