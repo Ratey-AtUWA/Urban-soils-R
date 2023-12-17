@@ -1,12 +1,179 @@
 ---
-title: "R Notebook"
+title: "Chapter 3 Spatial Variability and Data Analysis" 
+author: "Andrew W. Rate"
 output: 
-  word_document: 
-    highlight: tango
+  html_document: 
+    highlight: kate
+    df_print: default
 ---
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
-load("C:/Users/00028958/LocalData/Dropbox (Ratey at UWA)/R Projects/Urban soils text/.RData")
+load(".RData")
+load("urban_soils_text.RData")
 ```
+
+<style type="text/css">
+  body{
+  font-size: 12pt;
+}
+</style>
+
+--------------------------------------------------------------------------------
+
+**Abstract** Urban soils are likely to be even more variable than soils in other 
+environments, due to the inherent heterogeneity of urban environments which 
+intensifies natural soil variability. This chapter examines soil variability 
+related to urbanisation at several different spatial scales, from regional
+phenomena to differences observed on the scale of individual soil profles. Soil
+sampling strategies and designs are described, with discussion of the issues
+related to sampling density, sample numbers, the geometric arrangement of
+sampling locations, and ‘hotspot’ detection. We present methods for qualitative
+and quantitative analysis of soil spatial data using maps, spatial
+autocorrelation analysis, and variograms and kriging. Basic but rigorous
+statistical methods are described in the context of soils and compositional
+data, including comparisons, relationships, and multivariate techniques.
+
+**Keywords** Variability · Urban soils · Spatial scales · Spatial analysis ·  
+Spatial autocorrelation · Kriging · Statistics · Data analysis
+
+--------------------------------------------------------------------------------
+
+What you could learn from this chapter:
+
+- That soils are naturally variable, and whether urban centres create additional 
+sources of soil variability. You’ll also consider the spatial scales over which soils 
+vary and how these are related to urban environments.
+- How to sample soils in urban environments &ndash; there are several strategies, and we
+will discuss the reasons why we choose certain depths, combinations of sampling
+locations, how many samples we should take, and how far apart.
+- How we conduct spatial data analysis to investigate the relationships between 
+soil samples from different locations and the specific spatial statistical techniques we use.
+- How we apply common statistical methods to describe, explore, and assess urban 
+soil data.
+
+## 3.1 Soil Variability in Urban Environments
+
+Urban environments are far from uniform; cities are characterised by extreme
+variability, refecting the range of types, intensity, and timescales of human
+modification of the natural environment (Grimm et  al. 2000; Pickett et  al.
+2001). Not surprisingly, this general heterogeneity of urban environments is
+also present in urban soil environments. Prior to human interference, natural
+soils already showed significant spatial variation due to differences in soil
+parent material and other soil-forming factors (see Chap. 2). This pattern of
+natural soil variability has, superimposed upon it, the imprint of diverse human
+activity, creating an even more variable soil landscape.
+
+### 3.1.1 Cities and Regional Soil Variability
+
+There is some evidence from continental-scale geochemical surveys (Cicchella et
+al. 2015; Mann et al. 2015) that urbanised areas can be distinguished from
+non-urbanised land based on the concentration of some (potential contaminant)
+elements such as lead (Pb), with an example shown in Fig.  3.1. This distinction
+between urban and non-urban areas is detectable despite the variable background
+from differences in the chemical composition of parent materials. The
+geochemical signature of urbanisation extends to peri-urban areas (Cicchella et
+al. 2015). The anthroposequences discussed in Chap. 1 and elaborated on in the
+work of Richard Pouyat and others (*e.g*. Pouyat and McDonnell 1991; Pouyat et al.
+2007; Pouyat et al. 2008) also provide evidence that soils in cities may be
+distinguished from their rural counterparts on a regional scale.
+
+### 3.1.2 Soil Variability at the Scale of Cities
+
+The next largest scale of soil variability in urban environments is constrained
+by the dimensions of an individual city, taking into account the effects of the
+urban centre on the surrounding peri-urban and non-urbanised land.
+
+![Figure 3.1](./images/Fig3.1.png)
+
+**Fig. 3.1** Lead (Pb) concentrations in Italian agricultural surface soils, 
+showing the effect of the urban centres of Roma and Napoli (from Cicchella et 
+al. (2015) and used with permission from Elsevier)
+
+An important parameter for the spatial distribution of soils in cities is the
+amount of soil remaining exposed after urban development. This can be assessed
+using conventional ground-based surveying techniques or by remote sensing and
+image analysis (Wu and Murray 2003; Wu 2004). The remote sensing techniques
+commonly categorise land into vegetation, impervious, or soil categories (the
+V–I–S model). Urban catchments can range from 5 to 100% impervious cover,
+depending on the density of infrastructure (Fletcher et al. 2004). Assuming that
+the vegetation component of the remaining pervious cover represents plants
+growing in soil, then urban soil cover may range from approximately 95% to 0%.
+Whole-city soil cover ranges from 10 to 35% for smaller cities (pop. < 100,000;
+Bauer et al. 2008) and up to at least 60% in larger cities (Zhu et al. 2017).
+The proportion of soil cover in urban environments is itself highly variable and
+shows gradients related to distance from urban centres and age of urban
+development (Powell et al. 2007). Soil cover tends to be lowest in urban centres
+and to decrease as the time since development increases.
+
+Other urban soil properties also show systematic variation on whole-city scales.
+Johnson and Ander (2008) reviewed multiple studies of the spatial distribution
+of trace elements in urban environments, explaining that such studies have
+multiple objectives, including collection of baseline data, and identifying
+contaminated areas and their sources and risks. In many cities, the
+concentrations of some contaminants are greatest in the metropolitan centre
+(often the oldest area in the city), and lower concentrations occur at greater
+distance from the urban centre (*e.g*. Pb concentrations in surface soils in
+Pueblo, Colorado (Diawara et al. 2006); see Fig. 3.2). This implies a cumulative
+and ongoing input of contaminants, relating to more diffuse sources such as road
+traffc, construction, etc. In other urban environments, the concentrations are
+greatest and decrease with distance, from a recognisable source of
+contamination. For example, lead (Pb) concentrations in surface soil in the city
+of Mount Isa, Queensland, Australia, where Pb and Cu are mined, decrease from
+the mine and smelters in the west towards the urban area in the east, despite
+the dominant SE wind direction (Taylor et al. 2010).
+
+![Figure 3.2](./images/Fig3.2.png)
+**Fig. 3.2** Spatial distribution of lead (Pb) in surface soil (0–5 cm) sampled 
+in Pueblo, Colorado, USA (from Diawara et al. (2006); used with permission from 
+Springer)
+
+### 3.1.3 Soil Variability at the Locality or Site Scale
+
+The spatial distribution of potential contaminants (usually trace metals) in
+urban soils may simply represent variations in the concentrations of the same
+elements in the soil parent materials (*e.g*. Co and Mn concentrations measured
+by Gong et al. 2010) (see Fig. 3.3). In such cases, the potential contaminants
+are termed *geogenic*, emphasising that their origin is not from human activity.
+Depending on the size of the urban area, geogenic variations in soil properties
+vary on a similar scale to whole-city anthropogenic variations. For other soil
+properties (*e.g*. contaminant concentrations), the variability is attributable
+to human modifcations of the soil environment. These modifications include
+excavation, dumping, or construction and point or diffuse sources of
+contamination such as vehicle traffic or industrial emissions. For example, the
+high concentrations of Pb and Zn in urban centre soils in Wuhan, China, were 
+attributed by Gong et al. (2010) to domestic heating and road traffic.
+
+![Figure 3.3](./images/Fig3.3.png)
+**Fig. 3.3** Concentration distributions of (a) cobalt, Co; (b) manganese, Mn; 
+(c) lead, Pb; and (d) zinc, Zn, from a gridded sampling design in the area in
+and around Wuhan city, Hubei, China (blue cross-hatching ▦ shows urban area).
+Cobalt and manganese (a and b) show a geogenic distribuion, whereas lead and
+zinc (c and d) show accumulation in the urban area related to anthropogenic
+additions. Redrawn from Gong et al. (2010); used with permission from Springer
+
+In practice, urban soil investigations are more often conducted at the scale of
+specific sites, for example, to obtain site-specific data for environmental
+impact assessment (*e.g*. Carr et al. 2008). Figure 3.4 shows a typical pattern of
+spatial variability in soil properties for urban parkland soils, where the soil
+properties reflect a combination of both geogenic variation (some of the parkland
+occupies former lake beds) and anthropogenic modification (horticulture,
+landfill, construction, and demolition wastes). For example, zones of low pH in
+Fig. 3.4 are probably due to drainage of lake sediments and subsequent formation
+of acid sulphate soils; high pH probably reflects the use and/or disposal of
+limestone-based products such as construction cement. High EC (a measure of
+soluble salts in soils) could be caused by release of dissolved ions by acid
+sulphate oxidation or demolition of a building containing gypsum-based materials
+(*e.g*. wall and ceiling panels) in the south of the study site.
+
+Soil variability at the site scale is also shown more simply in concentration-distance relationships, for example, along transects (which are analogous to the 
+anthroposequences described for city- or regional-scale transects by Pouyat et al. 
+(2008)). Figure 3.5 presents two examples of such variability, showing gradients 
+away from likely contaminant sources (a major roadway and a coal-fired power station site). In both cases, it is likely that contaminants are carried from their sources 
+by wind (as aerosols) and deposited on soil surfaces in decreasing amounts as distance from the source increases. Transport of material from roads to soils by surface 
+fow of water is also possible.
+
+
+
+
 
 ## 3.3	Analysis of spatial data
 ## 3.3.1	Maps
@@ -208,9 +375,8 @@ The most convenient way of comparing between strata is to use some form of stati
 require(Rmisc)
 par(mar=c(4,4,1,1), mgp=c(2,0.25,0), mfrow=c(1,1), font.lab=2, 
     lend="square", ljoin="mitre", las=1, tcl = 0.5)
-palette(c("black","red3","darkgreen","blue2","#DDEE99",
-          "#FFEFA3","#e0e0e0","white","slategray1","thistle",
-          "purple","sienna4"))
+palette(c("black","red3","darkgreen","blue2","#DDEE99","#FFEFA3","#e0e0e0",
+          "white","slategray1","thistle","purple","sienna4"))
 windowsFonts(nar = "Arial Narrow")
 # 
 # change data object, variable & factor names to suit your data 
@@ -276,52 +442,95 @@ text(3, 4.2, labels = "Potential outlier\n(> Q3 + 1.5×IQR)",
 rm(list = c("ci0","n5"))
 ```
  
-Figure 3.14. Graphical comparisons of means and median concentrations of calcium in different sample types in an urban parkland, using an annotated and enhanced version of a standard 'Tukey' box plot. IQR = inter-quartile range (data and graphic by Andrew Rate). 
+**Figure 3.14**. Graphical comparisons of means and median concentrations of 
+calcium in different sample types in an urban parkland, using an annotated and 
+enhanced version of a standard 'Tukey' box plot. IQR = inter-quartile range 
+(data and graphic by Andrew Rate). 
 
 ### 3.4.2	Transforming variables
-In order to meet the assumptions of parametric statistical tests (*e.g*. t-tests, ANOVA/f-test), variables should be normally distributed. This is seldom the case for soil measurements (except sometimes soil pH), which commonly show positively skewed distributions. For continuous positively skewed variables, such as the concentration of a soil constituent, we tend to use transform variables either to logarithms (base 10 is most convenient and interpretable), or use a power function of the variable for transformation ($x_{transformed}$ = $x^a$, where a is the power term). The power term which transforms a variable to have a distribution “closest” to normal can be estimated from the Box-Cox algorithm, which is implemented in most statistical software. The power term a can be negative, which reverses the ordering of the variable (i.e. the greatest value will become the least, and vice versa). In this case the ordering of the original variable can be preserved by including a factor of −1 in the power transform calculation ($x_{transformed}$ = $−(x^a)$).
+In order to meet the assumptions of parametric statistical tests (*e.g*.
+t-tests, ANOVA/f-test), variables should be normally distributed. This is seldom
+the case for soil measurements (except sometimes soil pH), which commonly show
+positively skewed distributions. For continuous positively skewed variables,
+such as the concentration of a soil constituent, we tend to use transform
+variables either to logarithms (base 10 is most convenient and interpretable),
+or use a power function of the variable for transformation ($x_{transformed}$ =
+$x^a$, where a is the power term). The power term which transforms a variable to
+have a distribution “closest” to normal can be estimated from the Box-Cox
+algorithm, which is implemented in most statistical software. The power term a
+can be negative, which reverses the ordering of the variable (i.e. the greatest
+value will become the least, and vice versa). In this case the ordering of the
+original variable can be preserved by including a factor of −1 in the power
+transform calculation ($x_{transformed}$ = $−(x^a)$).
 
-For different types of variables, particular transformations are required. For example, variables which are counts rather than continuous variables should not be transformed; instead alternative statistical models such as Generalised Linear Models assuming a Poisson or negative binomial distribution should be used (O’Hara and Kotze, 2010). Compositional variables (including concentrations, or proportions of land surface coverage) are technically part of a fixed-sum closed set. For example, with data on percent land use over an urban area, all percentages add up to 100%!. If uncorrected, fixed sum closure can lead to very misleading conclusions, especially when relationships between variables are being investigated, as in correlation analyses or multivariate methods such as Principal Component Analysis. Closed data require specialised transformations to remove closure, such as calculation of centered or additive log-ratios (Reimann *et al*., 2008). The example in Figure 3.15 shows the relationship between phosphorus (P) and iron (Fe) in soil/sediment materials in an acid sulfate environment. Without correcting for compositional closure, the P vs. Fe plot implies that P increases as Fe increases. Correcting for compositional closure, however, suggests the opposite, with P negatively related to Fe! In this case, if we had used conventional transformations, we might have come to a very wrong conclusion about the sediment properties affecting phosphorus.
+For different types of variables, particular transformations are required. For
+example, variables which are counts rather than continuous variables should not
+be transformed; instead alternative statistical models such as Generalised
+Linear Models assuming a Poisson or negative binomial distribution should be
+used (O’Hara and Kotze, 2010). Compositional variables (including
+concentrations, or proportions of land surface coverage) are technically part of
+a fixed-sum closed set. For example, with data on percent land use over an urban
+area, all percentages add up to 100%!. If uncorrected, fixed sum closure can
+lead to very misleading conclusions, especially when relationships between
+variables are being investigated, as in correlation analyses or multivariate
+methods such as Principal Component Analysis. Closed data require specialised
+transformations to remove closure, such as calculation of centered or additive
+log-ratios (Reimann *et al*., 2008). The example in Figure 3.15 shows the
+relationship between phosphorus (P) and iron (Fe) in soil/sediment materials in
+an acid sulfate environment. Without correcting for compositional closure, the P
+vs. Fe plot implies that P increases as Fe increases. Correcting for
+compositional closure, however, suggests the opposite, with P negatively related
+to Fe! In this case, if we had used conventional transformations, we might have
+come to a very wrong conclusion about the sediment properties affecting
+phosphorus.
  
-```{r}
-par(mfrow=c(2,5), mar=c(3,0,1.,0), oma=c(0,4,0,1), mgp=c(1.4,0.3,0.0), lend=2, ljoin=1, 
-    font.lab=2, cex.axis=1, cex.lab=1.2, cex=1., lwd=1, tcl=-0.2)
+```{r fig3-15, fig.width=10, fig.height=3.6, message=FALSE, warning=FALSE, results='hold'}
+nx.clr <- read.csv("nx.clr.csv", stringsAsFactors = TRUE)
+par(mfrow=c(1,3), mar=c(4,4,2,1), oma=c(0,0.5,0,0), mgp=c(2,0.5,0.0), lend=2, ljoin=1, 
+    font.lab=2, cex.axis=1.5, cex.lab=1.8, lwd=2, tcl=-0.4)
+# layout(matrix(c(1,1,2,2,3), nrow=1))
 palette(c("black","sienna","darkolivegreen","grey92"))
 # closed
-plot(nx.clr$Fe.oes, nx.clr$REE.ms, log="xy", pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
-     xlab=expression(bold(paste(Fe[closed]," (mg/kg)"))), lwd=2)
-mtext(side=2, line=1.4, expression(bold(paste(Sigma,REE[closed]," (mg/kg)"))), cex=.8)
-plot(nx.clr$P.oes, nx.clr$REE.ms, log="xy", yaxt="n", pch=c(2,15)[nx.clr$Type],
-     col=c(2,3)[nx.clr$Type], xlab=expression(bold(paste(P[closed]," (mg/kg)"))), lwd=2)
-plot(nx.clr$S.oes, nx.clr$REE.ms, log="xy", yaxt="n", pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
-     xlab=expression(bold(paste(S[closed]," (mg/kg)"))), lwd=2,
-     ylab=expression(bold(paste(Sigma,REE[closed]," (mg/kg)"))))
-plot(nx.clr$S.oes, nx.clr$REE.ms, type="n", ann=F, xaxt="n", yaxt="n", bty="n")
-legend("topleft",legend=c("Dredge\nspoil","Sediment"), pch=c(2,15), col=c(2,3), bty="n",
-       inset=0.01, cex=1.2, pt.lwd=2, box.col=4, box.lwd=2, y.intersp=1.4, x.intersp=0.6)
+# plot(nx.clr$Fe.oes, nx.clr$REE.ms, log="xy", pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
+#      xlab=expression(bold(paste(Fe[closed]," (mg/kg)"))), lwd=2)
+# mtext(side=2, line=1.4, expression(bold(paste(Sigma,REE[closed]," (mg/kg)"))), cex=.8)
+# plot(nx.clr$P.oes, nx.clr$REE.ms, log="xy", yaxt="n", pch=c(2,15)[nx.clr$Type],
+#      col=c(2,3)[nx.clr$Type], xlab=expression(bold(paste(P[closed]," (mg/kg)"))), lwd=2)
+# plot(nx.clr$S.oes, nx.clr$REE.ms, log="xy", yaxt="n", pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
+#      xlab=expression(bold(paste(S[closed]," (mg/kg)"))), lwd=2,
+#      ylab=expression(bold(paste(Sigma,REE[closed]," (mg/kg)"))))
+# plot(nx.clr$S.oes, nx.clr$REE.ms, type="n", ann=F, xaxt="n", yaxt="n", bty="n")
+# legend("topleft",legend=c("Dredge\nspoil","Sediment"), pch=c(2,15), col=c(2,3), bty="n",
+#        inset=0.01, cex=1.2, pt.lwd=2, box.col=4, box.lwd=2, y.intersp=1.4, x.intersp=0.6)
 plot(nx.clr$Fe.oes, nx.clr$P.oes, log="xy", pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
-     lwd=2, xlab=expression(bold(paste(Fe[closed]," (mg/kg)"))),
+     lwd=2, cex=1.7, xlab=expression(bold(paste(Fe[closed]," (mg/kg)"))),
      ylab=expression(bold(paste(P[closed]," (mg/kg)"))))
-mtext(side=2, line=1.4, expression(bold(paste(Sigma,P[closed]," (mg/kg)"))), cex=.8)
+# mtext(side=2, line=1.4, expression(bold(paste(P[closed]," (mg/kg)"))), cex=.8)
 # clr
-plot(nx.clr$Fe, nx.clr$REE, pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
-     xlab=expression(bold(Fe[clr-transformed])), lwd=2)
-mtext(side=2, line=1.4, expression(bold(paste(Sigma,REE[clr-transformed]))), cex=.8)
-plot(nx.clr$P, nx.clr$REE, yaxt="n", pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
-     xlab=expression(bold(P[clr-transformed])), lwd=2)
-plot(nx.clr$S, nx.clr$REE, yaxt="n", pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
-     xlab=expression(bold(S[clr-transformed])), lwd=2,
-     ylab=expression(bold(paste(Sigma,REE[clr-transformed]))))
-plot(nx.clr$S, nx.clr$REE, type="n", ann=F, xaxt="n", yaxt="n", bty="n")
-legend("topleft",legend=c("Dredge\nspoil","Sediment"), pch=c(2,15), col=c(2,3), bty="n",
-       inset=0.01, cex=1.2, pt.lwd=2, box.col=4, box.lwd=2, y.intersp=1.4, x.intersp=0.6)
-plot(nx.clr$Fe, nx.clr$P, pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type], lwd=2,
-     xlab=expression(bold(Fe[clr-transformed])), ylab=expression(bold(P[clr-transformed])))
-mtext(side=2, line=1.5, text=expression(bold(P[clr-transformed])), cex=1.2)
+# plot(nx.clr$Fe, nx.clr$REE, pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
+#      xlab=expression(bold(Fe[clr-transformed])), lwd=2)
+# mtext(side=2, line=1.4, expression(bold(paste(Sigma,REE[clr-transformed]))), cex=.8)
+# plot(nx.clr$P, nx.clr$REE, yaxt="n", pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
+#      xlab=expression(bold(P[clr-transformed])), lwd=2)
+# plot(nx.clr$S, nx.clr$REE, yaxt="n", pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type],
+#      xlab=expression(bold(S[clr-transformed])), lwd=2,
+#      ylab=expression(bold(paste(Sigma,REE[clr-transformed]))))
+# plot(nx.clr$S, nx.clr$REE, type="n", ann=F, xaxt="n", yaxt="n", bty="n")
+plot(nx.clr$Fe, nx.clr$P, pch=c(2,15)[nx.clr$Type], col=c(2,3)[nx.clr$Type], 
+     lwd=2, cex=1.7, xlab=expression(bold(Fe[clr-transformed])), 
+     ylab=expression(bold(P[clr-transformed])))
+# mtext(side=2, line=1.5, text=expression(bold(P[clr-transformed])), cex=1.2)
+plot(0:1,0:1,type="n", bty="n", ann=F,axes=F)
+legend("left",legend=c("Dredge\nspoil","Sediment"), pch=c(2,15), col=c(2,3), bty="n",
+       cex=1.8, pt.lwd=2, box.col=4, box.lwd=2, y.intersp=1.4, x.intersp=0.6)
 palette('default')
 ```
  
-Figure 3.15. Comparison of relationships between P and Fe for (a) compositionally closed concentrations showing a positive relationship, and (b) concentration variables corrected for compositional closure using centered log-ratios showing a negative relationship. Data from Xu *et al*. (, 2018 #4721); graphic by Andrew Rate.
+**Figure 3.15** Comparison of relationships between P and Fe for (a) 
+compositionally closed concentrations showing a positive relationship, and (b) 
+concentration variables corrected for compositional closure using centered 
+log-ratios showing a negative relationship. Data from Xu *et al*. (2018); 
+graphic by Andrew Rate.
 
 The business of comparing means for environmental variables is possibly more complicated than we might have expected (as described above) but, to choose the correct method, the criteria are logical. The flow diagram in Figure 3.16 shows how we can make the choice using three relatively simple questions: How many groups do we want to compare? Are our variables (transformed if necessary) normally distributed? and, Does the variance of our variable depend on which group it is in? Once we have been guided in this way to the correct statistical test, we have two more questions that need to be asked. First, if we have more than two groups, which means are different from each other? We can answer this question rigorously using “pairwise comparison” tests, as described below. Second, do we have a meaningful difference, or just a statistical one? This is deciding whether we have a large or small “effect size”, and we discuss this below as well.
 
@@ -330,23 +539,23 @@ Figure 3.16. Decision tree for choosing appropriate statistical tests for overal
 
 ### 3.4.3	Pairwise comparisons
 
-The means comparison tests above will help us to make a decision about whether the mean value of some variable differs between strata. For sites with exactly two strata (where we would use a t-test or Wilcoxon test) the test tells us if the difference in means is between all combinations of strata – since there is only one possible combination! In most sites where we study urban soils, we commonly have sites with 3 or more strata, and we want to compare mean values of our measurements between the strata. Ideally we would like to know which means are different from the others (not just if we can reject the null). So, if the f-test or Kruskal-Wallis test allows rejection of the statistical null hypothesis (i.e., equal means), we usually follow up with a pairwise test. For well-conditioned data where the assumptions of ANOVA are met, we can use the Tukey set of statistical analyses (least significant difference, and rigorous pairwise p-values). For heteroscedastic variables this is not strictly allowed, but we can still apply something like a pairwise t test with adjustment of p-values for multiple comparisons. Finally, with a non-parametric (e.g. Kruskal-Wallis) test of three or more means, we can use pairwise Wilcoxon tests with adjustment of p-values for multiple comparisons, or a specialised pairwise comparison test such as Conover’s test.
+The means comparison tests above will help us to make a decision about whether the mean value of some variable differs between strata. For sites with exactly two strata (where we would use a t-test or Wilcoxon test) the test tells us if the difference in means is between all combinations of strata – since there is only one possible combination! In most sites where we study urban soils, we commonly have sites with 3 or more strata, and we want to compare mean values of our measurements between the strata. Ideally we would like to know which means are different from the others (not just if we can reject the null). So, if the f-test or Kruskal-Wallis test allows rejection of the statistical null hypothesis (i.e., equal means), we usually follow up with a pairwise test. For well-conditioned data where the assumptions of ANOVA are met, we can use the Tukey set of statistical analyses (least significant difference, and rigorous pairwise p-values). For heteroscedastic variables this is not strictly allowed, but we can still apply something like a pairwise t test with adjustment of p-values for multiple comparisons. Finally, with a non-parametric (*e.g*. Kruskal-Wallis) test of three or more means, we can use pairwise Wilcoxon tests with adjustment of p-values for multiple comparisons, or a specialised pairwise comparison test such as Conover’s test.
 
 ### 3.4.4	Effect sizes for comparing means
 
-We cannot rely on just rejection of the null hypothesis of equal means, since it is mathematically possible for a statistically significant difference to exist when the practical difference is meaningless. In some cases an effect size statistic, of which the most common is Cohen’s d (Equation 3.1), can help us assess the magnitude of the difference between central values (means or medians). Cohen’s d is a standardised measure of the difference between means for exactly two groups (e.g. strata), and its value is normally categorised as follows: d < 0.2 Negligible; 0.2 < d < 0.5 Small; 0.5 < d < 0.8 Medium; d > 0.8 Large. Most contemporary statistical software allows calculation of Cohen’s d for binary (two group) comparisons; for multiple (pairwise) comparisons, some custom coding (e.g. in R) may be required. (Note that the size of the p-value for a t-test, ANOVA or equivalent does not represent an effect size! We cannot assume we have a larger effect just because we have a smaller p-value.) 
+We cannot rely on just rejection of the null hypothesis of equal means, since it is mathematically possible for a statistically significant difference to exist when the practical difference is meaningless. In some cases an effect size statistic, of which the most common is Cohen’s d (Equation 3.1), can help us assess the magnitude of the difference between central values (means or medians). Cohen’s d is a standardised measure of the difference between means for exactly two groups (*e.g*. strata), and its value is normally categorised as follows: d < 0.2 Negligible; 0.2 < d < 0.5 Small; 0.5 < d < 0.8 Medium; d > 0.8 Large. Most contemporary statistical software allows calculation of Cohen’s d for binary (two group) comparisons; for multiple (pairwise) comparisons, some custom coding (*e.g*. in R) may be required. (Note that the size of the p-value for a t-test, ANOVA or equivalent does not represent an effect size! We cannot assume we have a larger effect just because we have a smaller p-value.) 
 
 $Cohen’s\;  d  =	    {(mean_{group 1} − mean_{group 2}) \over {Pooled\; standard\; deviation}}$ 		3.1
 		
 ## 3.5	Relationships between variables
 
-In the spatial context we can use correlation or regression statistics to assess relationships between a soil variable and distance (e.g. distance from a potential or suspected source of contamination). We also investigate relationships between variables for other reasons, such as finding which observations do not follow the expected relationship, and we will look at an example of this in Chapter 6. For now, we will go through the basics of correct application of correlation and regression analyses.
+In the spatial context we can use correlation or regression statistics to assess relationships between a soil variable and distance (*e.g*. distance from a potential or suspected source of contamination). We also investigate relationships between variables for other reasons, such as finding which observations do not follow the expected relationship, and we will look at an example of this in Chapter 6. For now, we will go through the basics of correct application of correlation and regression analyses.
 
 ### 3.5.1	Correlation analysis
 
-The most commonly used measure of correlation between two variables (bivariate) is Pearson’s correlation coefficient, r, which can vary between −1 and 1, with an r value of zero meaning no correlation. The assumptions behind calculation of Pearson’s r require that each variable is normally distributed; sometimes this can be achieved with an appropriate transformation (e.g. taking logarithms, or a power function, bearing in mind the discussion in section 3.4.2 above). Variables which are unable to be transformed to a normally distributed variable are unsuitable for Pearson’s correlation analysis, but we can use a non-parametric method, Spearman’s correlation, in such cases. Spearman’s correlation is based on comparison of ranks within each ordered variable, and is therefore independent of transformation. The p-value for correlation tests is for the null hypothesis of no relationship between the pair of variables, against the existence of a true correlation in the population from which the sample is taken.
+The most commonly used measure of correlation between two variables (bivariate) is Pearson’s correlation coefficient, r, which can vary between −1 and 1, with an r value of zero meaning no correlation. The assumptions behind calculation of Pearson’s r require that each variable is normally distributed; sometimes this can be achieved with an appropriate transformation (*e.g*. taking logarithms, or a power function, bearing in mind the discussion in section 3.4.2 above). Variables which are unable to be transformed to a normally distributed variable are unsuitable for Pearson’s correlation analysis, but we can use a non-parametric method, Spearman’s correlation, in such cases. Spearman’s correlation is based on comparison of ranks within each ordered variable, and is therefore independent of transformation. The p-value for correlation tests is for the null hypothesis of no relationship between the pair of variables, against the existence of a true correlation in the population from which the sample is taken.
 
-Very often, it is useful for exploratory data analysis to generate a correlation matrix, which calculates a correlation coefficient (e.g. Pearson’s or Spearman’s) for all possible pairwise relationships between the variables selected. These are subject to the same requirements in terms of the distribution of variables as bivariate correlations, with the additional precaution that p-values should be adjusted upwards to account for the increased likelihood of Type 1 errors (false positives) when multiple comparisons are made. Most statistical software will calculate these corrected p-values, for example using Holm’s method.
+Very often, it is useful for exploratory data analysis to generate a correlation matrix, which calculates a correlation coefficient (*e.g*. Pearson’s or Spearman’s) for all possible pairwise relationships between the variables selected. These are subject to the same requirements in terms of the distribution of variables as bivariate correlations, with the additional precaution that p-values should be adjusted upwards to account for the increased likelihood of Type 1 errors (false positives) when multiple comparisons are made. Most statistical software will calculate these corrected p-values, for example using Holm’s method.
 
 With any correlation analyses, it is essential to check the relationships graphically. It is easy to misinterpret r values if the data behave unexpectedly. For example, outliers may still exist in transformed variables, which have a large influence  on the value of Pearson’s r. The variables may show grouping or bimodality, so that the true relationships are masked by considering the data as whole, or a strong relationship may exist which is non-linear as assumed in the Pearson correlation. Inspection of (appropriately transformed) bivariate plots can identify these types of issues, and most statistical software will allow plotting of scatterplot matrices to streamline this task.
 
@@ -356,54 +565,172 @@ If a relationship between variables exists, it should be possible to estimate, o
 
 The general form of the multiple or simple  linear regression models we will discuss is:
 
-$y = a + \sum_{i=1}^n b_i x_i + e $ 			3.2
+$y=a+\sum_{i=1}^n b_i x_i+e$ 			3.2
 
-where y is the dependent variable to be predicted; n is the number of predictor variables (which can equal 1); a is the constant “intercept” term; $x_i$ are the predictor variables; $b_i$ are the coefficients for each predictor, and e is the error term or “residual”.
+where *y* is the dependent variable to be predicted; *n* is the number of
+predictor variables (which can equal 1); *a* is the constant “intercept” term;
+$x_i$ are the predictor variables; $b_i$ are the coefficients for each
+predictor, and *e* is the error term or “residual”.
 
-Initial assumptions and transformations. For a valid linear regression model, the residuals need to be normally distributed. In practice we can increase the likelihood that this will be the case by transforming our variables to remove skewness, commonly with a log10 transformation. Since the goal is prediction, rather than analysis of the relationship itself, we can argue that issues like compositional closure can be ignored. In our example, we $log_{10}$-transform all variables except soil pH which is used untransformed.
+Initial assumptions and transformations. For a valid linear regression model,
+the residuals need to be normally distributed. In practice we can increase the
+likelihood that this will be the case by transforming our variables to remove
+skewness, commonly with a log10 transformation. Since the goal is prediction,
+rather than analysis of the relationship itself, we can argue that issues like
+compositional closure can be ignored. In our example, we $log_{10}$-transform
+all variables except soil pH which is used untransformed.
 
-*Choosing predictors*. The next decision that needs to be made is what the predictor variable(s) should be. Realistically, we would normally try to predict a variable that is difficult, unreliable, or expensive to measure, since we would usually rather than have an actual measurement than an estimate from prediction. The predictor variables, then, would logically be those which are more easily, reliably, and/or inexpensively measured. More importantly, we should try to choose predictors that make sense in the real world. For example, the concentrations of trace elements in soils are often closely related to one another due to similar geochemistry or common sources. In reality, though, it’s unlikely that one trace element would have an effect on another in soils since the concentrations of both are too low. In soils, then we tend to use “bulk soil” properties such as pH, clay content, organic carbon and other major element content, EC, redox potential, and so on, as predictors, since they fulfil both the “easily measured” and “realistic effect” criteria. For our example, we want to predict arsenic (As) concentrations, and our initial list of predictors is: pH, EC, Al, Ca, Fe, K, Mn, Na, P, and S.
+*Choosing predictors*. The next decision that needs to be made is what the 
+predictor variable(s) should be. Realistically, we would normally try to predict 
+a variable that is difficult, unreliable, or expensive to measure, since we 
+would usually rather than have an actual measurement than an estimate from 
+prediction. The predictor variables, then, would logically be those which are 
+more easily, reliably, and/or inexpensively measured. More importantly, we 
+should try to choose predictors that make sense in the real world. For example,
+the concentrations of trace elements in soils are often closely related to one
+another due to similar geochemistry or common sources. In reality, though, it’s
+unlikely that one trace element would have an effect on another in soils since
+the concentrations of both are too low. In soils, then we tend to use “bulk
+soil” properties such as pH, clay content, organic carbon and other major
+element content, EC, redox potential, and so on, as predictors, since they
+fulfil both the “easily measured” and “realistic effect” criteria. For our
+example, we want to predict arsenic (As) concentrations, and our initial list of
+predictors is: pH, EC, Al, Ca, Fe, K, Mn, Na, P, and S.
 
-*Collinearity of predictors*. The predictors we select should not be linearly related to one another (collinear). The criteria we use to assess this are the Pearson correlations (which should be ≤ 0.8 between any pair of predictors) and Variance Inflation Factors (VIF), which estimate how much greater the variance of a regression coefficient (the $b_i$ values in Equation 3.2) is, due to collinearity. There are various rules-of-thumb for selecting predictors on the basis of VIF: a value above 10 suggests that a predictor should be removed; 4 < VIF < 10 should be noted. In our example, the following pairs of predictor variables have Pearson’s r greater than 0.8: Al-Fe, Fe-Mn, and Mn-P. The variance inflation factors are listed in Table 3 1. We will choose to remove Al and Mn from the “maximal” regression model, but different variables could have been removed.
+*Collinearity of predictors*. The predictors we select should not be linearly 
+related to one another (collinear). The criteria we use to assess this are the
+Pearson correlations (which should be ≤ 0.8 between any pair of predictors) and
+Variance Inflation Factors (VIF), which estimate how much greater the variance
+of a regression coefficient (the $b_i$ values in Equation 3.2) is, due to
+collinearity. There are various rules-of-thumb for selecting predictors on the
+basis of VIF: a value above 10 suggests that a predictor should be removed; 4 <
+VIF < 10 should be noted. In our example, the following pairs of predictor
+variables have Pearson’s r greater than 0.8: Al-Fe, Fe-Mn, and Mn-P. The
+variance inflation factors are listed in Table 3 1. We will choose to remove Al
+and Mn from the “maximal” regression model, but different variables could have
+been removed.
 
-Table 3 1 Variance inflation factors (VIF) for a multiple regression model predicting $As_{log}$ from pH, EClog, Allog, Calog, Felog, Klog, Mnlog, Nalog, Plog, and Slog (subscript log denotes $log_{10}$ transformation).
-Predictor	pH	EClog	Allog	Calog	Felog	Klog	Mnlog	Nalog	Plog	Slog
-VIF	3.163	1.911	8.123	5.571	7.982	3.298	9.575	7.997	7.768	5.774
+**Table 3.1** Variance inflation factors (VIF) for a multiple regression model 
+predicting As~log~ from pH, EC~log~, Al~log~, Ca~log~, Fe~log~, K~log~, Mn~log~, 
+Na~log~, P~log~, and S~log~ (subscript ~log~ denotes log~10~ transformation).
 
-Refinement of predictors. Not all of the possible predictors that we select will have a significant influence on the value of our dependent variable. The output of statistical software (e.g. Table 3 2) usually has a p-value from a test of significance for each predictor (using the null hypothesis that the predictor has no effect on the dependent variable), as well as an analogous null-hypothesis significance test for the model as a whole. Inspection of this output may imply that that some predictors have no effect. To remove non-significant predictors, we use a stepwise regression algorithm, which systematically adds and removes predictors from a set of models, using an “information criterion” to select the best subset of predictors which all contribute “information” or predictive ability to the model. The stepwise algorithm can be configured to add predictors from a list to a basic model (forward selection), or to remove predictors from a maximal model, or both. Ideally, different implementations of stepwise procedures, using the same data, should arrive at the saem final answer.
+```
+Predictor  pH  EClog  Allog  Calog  Felog   Klog  Mnlog  Nalog   Plog   Slog
+VIF     3.163  1.911  8.123  5.571  7.982  3.298  9.575  7.997  7.768  5.774
+```
 
-Table 3 2. Summary of final regression model predicting Aslog from initial predictors pH, EClog, Allog, Calog, Felog, Klog, Mnlog, Nalog, Plog, and Slog (subscript log denotes log10 transformation). Values explained in the text are in shaded cells with bold italic text. The same final set of predictors was obtained by either forward or backward stepwise selection of predictors in R (R Core Team, 2019 #2631).
-Residuals:	Min	1Q	Median	3Q	Max	
-	-0.300155	-0.082543	-0.00583	0.049328	0.296157	
-Coefficients:		Estimate	Std. Error	t value	Pr(>|t|)	
-	(Intercept)	-1.08038	0.31638	-3.415	0.001343	**
-	Felog	0.57608	0.05875	9.805	7.58E-13	***
-	pH	-0.06438	0.01821	-3.535	0.000944	***
-	EClog	-0.16794	0.07197	-2.333	0.024051	*
-	Slog	0.15322	0.07629	2.008	0.050487	.
-Signif. codes:  	*** ≤ 0.001	** ≤ 0.01	* ≤ 0.05	. ≤ 0.1		
-Statistics:	Residual standard error	 0.1245 on 46 degrees of freedom
-	Multiple R-squared	0.8155	    Adjusted R-squared	0.7994
-	F-statistic	 50.82 on 4 & 46 DF	  p-value	2.61E-16
-Predictor:	Felog	pH	EClog	Slog		
-VIF:	1.374	1.192	1.028	1.562		
+Refinement of predictors. Not all of the possible predictors that we select will have a significant influence on the value of our dependent variable. The output of statistical software (*e.g*. Table 3.2) usually has a p-value from a test of significance for each predictor (using the null hypothesis that the predictor has no effect on the dependent variable), as well as an analogous null-hypothesis significance test for the model as a whole. Inspection of this output may imply that that some predictors have no effect. To remove non-significant predictors, we use a stepwise regression algorithm, which systematically adds and removes predictors from a set of models, using an “information criterion” to select the best subset of predictors which all contribute “information” or predictive ability to the model. The stepwise algorithm can be configured to add predictors from a list to a basic model (forward selection), or to remove predictors from a maximal model, or both. Ideally, different implementations of stepwise procedures, using the same data, should arrive at the same final answer.
 
+Table 3 2. Summary of final regression model predicting Aslog from initial predictors pH, EC~log~, Al~log~, Ca~log~, Fe~log~, K~log~, Mn~log~, Na~log~, P~log~, and S~log~ (subscript ~log~ denotes log~10~ transformation). Values explained in the text are in shaded cells with **bold** text. The same final set of predictors was obtained by either forward or backward stepwise selection of predictors in R (R Core Team, 2019).
 
-We can see in Table 3 2 that the null hypothesis of no prediction ability is rejected at p≤0.05 for all predictors in the final model except Slog (this relates to the different selection criteria for predictors in the stepwise procedure). The model is good at predicting As concentration; the multiple R² (r-squared) value is 0.8155, so nearly 82% of the variance in log10As is explained by the four predictors. We can also reject (p-value = 2.6×10−16, so p≤0.05) the null hypothesis of no prediction ability for the overall model. The VIF values are all close to 1, meaning negligible collinearity.
-Model checking. Many of the assumptions for regression relate to the residuals, and we use a number of diagnostic tests and/or plots (Figure 3.17) to assess these assumptions. First, the residuals have a median value close to zero (−0.0058, Table 3 2) and the mean residual value is 1.8×10−18. By applying a Shapiro-Wilk test to the residuals from the model we find that the null hypothesis (that the distribution is not different from a normal distribution) cannot be rejected, satisfying the assumption of normally distributed residuals. The VIF values are all close to 1 (Table 3 2), meaning negligible collinearity.
+<table border=0 width="80%">
+
+<tr style="border-top: 1px solid black;">
+<td>Residuals:</td><td>Min</td><td>1Q</td><td>Median</td><td>3Q</td><td>Max</td></tr>
+
+<tr style="border-bottom: 1px solid gray;">
+<td>&nbsp;</td><td>-0.300155</td><td>-0.082543</td>
+<td style="background-color: #e0e0e0;"><b>-0.00583</b></td><td>0.049328</td><td>0.296157</td></tr>	
+
+<tr><td><b>Coefficients</b>:</td><td>&nbsp;</td><td>Estimate</td><td>Std. Error</td><td>t value</td><td>Pr(>|t|)</td></tr>
+
+<tr><td>&nbsp;</td><td>(Intercept)</td><td>-1.08038</td><td>0.31638</td><td>-3.415</td>
+<td style="background-color: #e0e0e0;"><b>0.001343</b></td><td><b></td></tr>
+
+<tr><td>&nbsp;</td><td>Fe<sub>log</sub></td><td>0.57608</td><td>0.05875</td><td>9.805</td>
+<td style="background-color: #e0e0e0;"><b>7.58E-13</b></td><td>***</td></tr>
+
+<tr><td>&nbsp;</td><td>pH</td><td>-0.06438</td><td>0.01821</td><td>-3.535</td>
+<td style="background-color: #e0e0e0;"><b>0.000944</b></td><td>***</td></tr>
+
+<tr><td>&nbsp;</td><td>EC<sub>log</sub></td><td>-0.16794</td><td>0.07197</td><td>-2.333</td>
+<td style="background-color: #e0e0e0;"><b>0.024051</b></td><td>*</td></tr>
+
+<tr><td>&nbsp;</td><td>S<sub>log</sub></td><td>0.15322</td><td>0.07629</td><td>2.008</td>
+<td style="background-color: #e0e0e0;"><b>0.050487</b></td><td>.</td></tr>
+
+<tr style="border-bottom: 1px solid gray;"><td><b>Signif. codes</b>:</td><td>*** ≤ 0.001</td><td>** ≤ 0.01</td><td>* ≤ 0.05	</td><td>. ≤ 0.1</td><tr>
+
+<tr><td>Statistics:</td><td colspan2>Residual standard error</td><td colspan=4>0.1245 on 46 degrees of freedom</td></tr>
+
+<tr><td>&nbsp;</td><td colspan=2>Multiple R-squared</td>
+<td style="background-color: #e0e0e0;"><b>0.8155</b></td><td colspan=2>Adjusted R-squared</td><td>0.7994</td></tr>
+
+<tr style="border-bottom: 1px solid gray;"><td>&nbsp;</td><td>F-statistic</td><td colspan=2>50.82 on 4 & 46 DF</td><td colspan=2>p-value</td><td><b>2.61E-16</b></td></tr>
+
+<tr><td><b>Predictor</b>:</td><td>Felog</td><td>pH</td><td>EClog</td><td>Slog</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+
+<tr style="border-bottom: 1px solid black;"><td><b>VIF</b>:</td><td>1.374</td><td>1.192</td><td>1.028</td><td>1.562</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+</table>
+
+<p>&nbsp;</p>
+
+We can see in Table 3.2 that the null hypothesis of no prediction ability is
+rejected at p≤0.05 for all predictors in the final model except S~log~ (this
+relates to the different selection criteria for predictors in the stepwise
+procedure). The model is good at predicting As concentration; the multiple R^2^
+(r-squared) value is 0.8155, so nearly 82% of the variance in log~10~As is
+explained by the four predictors. We can also reject (p-value = 2.6×10^−16^, so
+p≤0.05) the null hypothesis of no prediction ability for the overall model. The
+VIF values are all close to 1, meaning negligible collinearity.
+
+**Model checking**. Many of the assumptions for regression relate to the 
+residuals, and we use a number of diagnostic tests and/or plots (Figure 3.17) to
+assess these assumptions. First, the residuals have a median value close to zero
+(−0.0058, Table 3.2) and the mean residual value is 1.8×10^−18^. By applying a
+Shapiro-Wilk test to the residuals from the model we find that the null
+hypothesis (that the distribution is not different from a normal distribution)
+cannot be rejected, satisfying the assumption of normally distributed residuals.
+The VIF values are all close to 1 (Table 3 2), meaning negligible collinearity.
 
  
-Figure 3.17. Diagnostic plots for the final regression model predicting Aslog from predictors pH, EClog, Felog, and Slog (subscript log denotes log10 transformation). 
+**Figure 3.17** Diagnostic plots for the final regression model predicting 
+As~log~ from predictors pH, EC~log~, Fe~log~, and S~log~ (subscript ~log~ 
+denotes log~10~ transformation).
 
-The standard set of diagnostic plots (Figure 3.17) allows us to assess, visually, some further regression assumptions. The residuals vs. fitted plot checks that the mean residual is close to zero, and that there is no systematic trend in the residuals (this can be assessed separately by calculating residual autocorrelation; the autocorrelation coefficients should be close to zero). The normal Q-Q plot is a visual assessment of whether the residuals are normally distributed; the dotted straight line represents a perfect normal distribution with the same mean and standard deviation as the residuals, and the points lie approximately along this line, confirming the Shapiro-Wilk test result above. The scale-location plot assesses whether the residuals show homoscedasticity (i.e. the size of the residuals should be independent of the value of the dependent variable, measured or predicted). In our case there seems to be a “bulge” of greater residuals in the middle of the plot, suggesting that this assumption may not be fulfilled for our model (again, we can test for this in more detail separately). Finally, the residuals vs. leverage plot is one way of testing if any individual observation has an unexpectedly large influence on the model parameters. Cook’s Distance is a measure of the change in regression parameters when a point is removed; ideally its value should be zero. There are a number of rules-of-thumb defining excessively large Cook’s Distance values, e.g. 4/n, where n is the number of observations (points).
-The final regression model can be used in different ways. We can never use correlation or regression to make conclusions about whether one measurement causes another; “…correlation is not causation”. We could certainly use the soil pH, EC, and Fe and S contents, however, to predict As concentration with some accuracy. Actually, though, total As concentration is not so difficult to measure! We may choose to include regression models as part of more complex environmental simulation models where many parameters are required and we do not have access to data for all possible locations where prediction is required. One of the more powerful ways we can use regression models in urban environments is to make use of the deviations from the model – with well-chosen predictors, these can provide a good indication of truly unusual samples, and we look at an example of doing this in Chapter 6.
+The standard set of diagnostic plots (Figure 3.17) allows us to assess,
+visually, some further regression assumptions. The residuals vs. fitted plot
+checks that the mean residual is close to zero, and that there is no systematic
+trend in the residuals (this can be assessed separately by calculating residual
+autocorrelation; the autocorrelation coefficients should be close to zero). The
+normal Q-Q plot is a visual assessment of whether the residuals are normally
+distributed; the dotted straight line represents a perfect normal distribution
+with the same mean and standard deviation as the residuals, and the points lie
+approximately along this line, confirming the Shapiro-Wilk test result above.
+The scale-location plot assesses whether the residuals show homoscedasticity
+(i.e. the size of the residuals should be independent of the value of the
+dependent variable, measured or predicted). In our case there seems to be a
+“bulge” of greater residuals in the middle of the plot, suggesting that this
+assumption may not be fulfilled for our model (again, we can test for this in
+more detail separately). Finally, the residuals vs. leverage plot is one way of
+testing if any individual observation has an unexpectedly large influence on the
+model parameters. Cook’s Distance is a measure of the change in regression
+parameters when a point is removed; ideally its value should be zero. There are
+a number of rules-of-thumb defining excessively large Cook’s Distance values,
+*e.g*. 4/n, where n is the number of observations (points).
+
+The final regression model can be used in different ways. We can never use
+correlation or regression to make conclusions about whether one measurement
+causes another; “...correlation is not causation”. We could certainly use the
+soil pH, EC, and Fe and S contents, however, to predict As concentration with
+some accuracy. Actually, though, total As concentration is not so difficult to
+measure! We may choose to include regression models as part of more complex
+environmental simulation models where many parameters are required and we do not
+have access to data for all possible locations where prediction is required. One
+of the more powerful ways we can use regression models in urban environments is
+to make use of the deviations from the model – with well-chosen predictors,
+these can provide a good indication of truly unusual samples, and we look at an
+example of doing this in Chapter 6.
 
  
  
-Figure 3.18. Regressions predicting log10As from log10S, showing grouped (separate symbols, solid lines) and ungrouped (dashed line with shaded 95% confidence interval) regression models.
+Figure 3.18. Regressions predicting log10As from log10S, showing grouped
+(separate symbols, solid lines) and ungrouped (dashed line with shaded 95%
+confidence interval) regression models.
 
  
 Table 3 3. Summary and interpretation of ungrouped and grouped regression statistics.
+```
 Ungrouped regression
 logAs = -0.905 + 0.587∙logS
 R² = 0.371, F statistic = 28.86 on 1 and 49 DF,  p-value: 2.13×10−6
@@ -421,21 +748,49 @@ Comparison of models
 	Res.Df     RSS	Df	Sum of Sq	F	Pr(>F)
 Ungrouped	49	2.43273	
 Grouped	39	0.76705	10	1.6657	8.469	3.928e-07
-(P-values is ≤0.05 so the null hypothesis, that the more complex model makes no improvement in prediction, can be rejected.)
+```
+(P-values is ≤0.05 so the null hypothesis, that the more complex model makes no 
+improvement in prediction, can be rejected.)
 
-
+<p>&nbsp;</p>
  
 Of course, multiple regression is not the only variation on simple linear regression that we can make use of when studying urban soils. If we have different sampling strata (see Section 3.2.2 above), we can make use of our stratified sampling design in regression. We would not necessarily expect the same linear relationships between variables in different strata (which might, for instance include both industrial land and undisturbed nature reserves). In this case we can use grouped linear regression (see Figure 3.18 and Table 3 3), which effectively includes a separate intercept and coefficient(s) for each stratum within our data. 
 The general form of the grouped or simple linear regression models is similar to that for multiple regression:
  			3.3
-where the terminology is as for Equation 3.2, except that now we have a single predictor x with different intercepts (ai) and slopes (bi) for each group of observations.
+where the terminology is as for Equation 3.2, except that now we have a single predictor x with different intercepts (a~i~) and slopes (b~i~) for each group of observations.
 
 We should always check if the more complex model is actually better at prediction, or whether it is simply “over parameterised”. We can compare linear regression models by using analysis of variance (Table 3 3).
-3.5.3	Multivariate analyses
-It is quite common to measure many variables in studies of urban soils. In the sections above we have discussed how to analyse a dataset to interpret one variable at a time (although use of multiple linear regression does potentially use many variables to explain one other variable). Using various types of ordination analysis, we can use the information contained in multiple variables to create a reduced subset of variables containing nearly the same amount of information. Ordination methods are also referred to, for this reason, as “data reduction” methods.
-One of the earliest and most widely-used ordination methods for exploration and dimension-reduction of multivariate data is Principal Components Analysis (PCA; see the explanation in Box 3-2). Imagine a dataset with many samples (rows) and n continuous numeric variables (columns) which contain quantitative information about each sample such as concentrations, heights, or velocities, etc. For these n variables/dimensions the principal components calculation generates n new variables, or principal components, which are each a function of the set of all the original variables (so each principal component is defined by a weighting or coefficient for each of the original variables). We may choose to omit some variables from the analysis if they contain too many missing observations, or if there is another valid reason to doubt their integrity. Since each principal component is selected to account for successively smaller proportions of the multiple variance, it is usually the first few principal components which explain most of the variance and therefore contain the most useful information. We conventionally visualise this in a “scree plot” (Figure 3.20(a)), a kind of bar graph showing the decrease in variance accounted for by each component (the “eigenvalue”).
 
-Box 3-2 Principal Components Analysis
+### 3.5.3 Multivariate analyses
+
+It is quite common to measure many variables in studies of urban soils. In the
+sections above we have discussed how to analyse a dataset to interpret one
+variable at a time (although use of multiple linear regression does potentially
+use many variables to explain one other variable). Using various types of
+ordination analysis, we can use the information contained in multiple variables
+to create a reduced subset of variables containing nearly the same amount of
+information. Ordination methods are also referred to, for this reason, as “data
+reduction” methods.
+
+One of the earliest and most widely-used ordination methods for exploration and
+dimension-reduction of multivariate data is Principal Components Analysis (PCA;
+see the explanation in Box 3-2). Imagine a dataset with many samples (rows) and
+n continuous numeric variables (columns) which contain quantitative information
+about each sample such as concentrations, heights, or velocities, etc. For these
+n variables/dimensions the principal components calculation generates n new
+variables, or principal components, which are each a function of the set of all
+the original variables (so each principal component is defined by a weighting or
+coefficient for each of the original variables). We may choose to omit some
+variables from the analysis if they contain too many missing observations, or if
+there is another valid reason to doubt their integrity. Since each principal
+component is selected to account for successively smaller proportions of the
+multiple variance, it is usually the first few principal components which
+explain most of the variance and therefore contain the most useful information.
+We conventionally visualise this in a “scree plot” (Figure 3.20(a)), a kind of
+bar graph showing the decrease in variance accounted for by each component (the
+“eigenvalue”).
+
+#### Box 3-2 Principal Components Analysis
  
 Figure 3.19. Visualisation of Principal Components Analysis for three variables/dimensions x, y, and z: we can conceptualise an ellipsoid encapsulating the “cloud” of points (i.e. samples). The longest dimension (Principal Axis 1) of the ellipsoid, which accounts for the greatest proportion of multiple variance, is in the direction of its major axis and is a function of the variables x, y, and z. Principal Axis 2 must be orthogonal to Principal Axis 1, and is a different function of the variables x, y, and z which accounts for the next highest-possible proportion of multiple variance. Principal Axis 3 must be orthogonal to both Principal Axes 1 and 2, is a unique function of x, y, and z, and accounts for the remainder of multiple variance. For n variables/dimensions (n > 3), the analogy is an n-dimensional hyper-ellipsoid which has n orthogonal axes, which is very difficult to visualise.
 
