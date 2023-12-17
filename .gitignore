@@ -3,4 +3,5 @@
 .Rhistory
 *.Rproj
 *.docx
+*.lnk
 /images/*
